@@ -1,0 +1,11 @@
+# 统一换行符，避免 Windows 提交后整个仓库变成 CRLF
+* text=auto eol=lf
+
+# 二进制 / 生成物
+*.png binary
+*.jpg binary
+*.ico binary
+*.woff2 binary
+
+# 第三方本地化的前端依赖不要被二次格式化
+web/vendor/* -text

@@ -1,0 +1,2444 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>鱼缸 · FishTank</title>
+<link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+<script defer src="/vendor/alpine.min.js"></script>
+<style>
+/* ============================================================
+   设计令牌：对齐 AstrBot Dashboard 的主题色（LightTheme / DarkTheme）
+   primary #3c96ca / #5ba4d4，surface / border / 文本三级灰阶
+   ============================================================ */
+:root {
+  --primary: #5ba4d4;
+  --primary-strong: #3a8ab8;
+  --primary-soft: rgba(91,164,212,.16);
+  --primary-contrast: #ffffff;
+
+  --bg: #1a1a1a;
+  --surface: #242424;
+  --surface-2: #2a2a2a;
+  --surface-3: #313131;
+  --border: rgba(255,255,255,.09);
+  --border-strong: rgba(255,255,255,.18);
+
+  --text: #e8eaed;
+  --text-2: rgba(255,255,255,.66);
+  --text-3: rgba(255,255,255,.42);
+
+  --success: #52c41a;
+  --success-soft: rgba(82,196,26,.16);
+  --warning: #faad14;
+  --warning-soft: rgba(250,173,20,.16);
+  --error: #ff4d4f;
+  --error-soft: rgba(255,77,79,.16);
+
+  --shadow-1: 0 1px 2px rgba(0,0,0,.4), 0 2px 10px rgba(0,0,0,.22);
+  --shadow-2: 0 10px 36px rgba(0,0,0,.5);
+  --radius: 10px;
+  --radius-lg: 14px;
+  color-scheme: dark;
+}
+
+html[data-theme="light"] {
+  --primary: #3c96ca;
+  --primary-strong: #2f86bd;
+  --primary-soft: #e6f2fa;
+  --primary-contrast: #ffffff;
+
+  --bg: #f4f6f8;
+  --surface: #ffffff;
+  --surface-2: #f7f9fb;
+  --surface-3: #eef2f6;
+  --border: rgba(15,23,42,.10);
+  --border-strong: rgba(15,23,42,.18);
+
+  --text: #1b1c1d;
+  --text-2: rgba(0,0,0,.62);
+  --text-3: rgba(0,0,0,.42);
+
+  --success: #00a854;
+  --success-soft: #e7f7ee;
+  --warning: #d98b00;
+  --warning-soft: #fff5e2;
+  --error: #d93026;
+  --error-soft: #fdecea;
+
+  --shadow-1: 0 1px 2px rgba(16,24,40,.06), 0 1px 3px rgba(16,24,40,.08);
+  --shadow-2: 0 14px 40px rgba(16,24,40,.18);
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Inter, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+[x-cloak] { display: none !important; }
+::selection { background: var(--primary-soft); }
+
+/* ---------- 骨架 ---------- */
+.app { display: flex; height: 100vh; overflow: hidden; }
+
+.drawer {
+  width: 244px; flex: 0 0 244px; display: flex; flex-direction: column;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+}
+.brand { display: flex; align-items: center; gap: 10px; padding: 18px 18px 16px; }
+.brand-mark {
+  width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center;
+  background: var(--primary-soft); color: var(--primary);
+}
+.brand-name { font-size: 15px; font-weight: 600; letter-spacing: .2px; line-height: 1.25; }
+.brand-sub { font-size: 11px; color: var(--text-3); }
+
+.nav { flex: 1; overflow-y: auto; padding: 4px 10px 12px; }
+.nav-group {
+  font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--text-3); padding: 14px 10px 6px;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 10px; margin-bottom: 2px; border-radius: 8px;
+  font-size: 13.5px; color: var(--text-2); cursor: pointer;
+  transition: background .15s, color .15s;
+  user-select: none;
+}
+.nav-item:hover { background: var(--surface-3); color: var(--text); }
+.nav-item.active { background: var(--primary-soft); color: var(--primary); font-weight: 600; }
+.nav-item > span:first-child { width: 17px; height: 17px; flex: 0 0 auto; display: block; }
+.nav-item .grow { flex: 1; }
+
+.drawer-foot {
+  border-top: 1px solid var(--border); padding: 12px 16px;
+  font-size: 11.5px; color: var(--text-3); display: grid; gap: 6px;
+}
+.drawer-foot b { color: var(--text-2); font-weight: 500; }
+
+.main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+
+.topbar {
+  height: 64px; flex: 0 0 64px; display: flex; align-items: center; gap: 12px;
+  padding: 0 24px; background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+.topbar h1 { margin: 0; font-size: 18px; font-weight: 600; letter-spacing: .1px; }
+.topbar .sub { font-size: 12px; color: var(--text-3); margin-top: 1px; }
+.topbar-actions { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+
+.icon-btn {
+  width: 38px; height: 38px; border-radius: 50%; border: none; cursor: pointer;
+  display: grid; place-items: center; background: transparent; color: var(--text-2);
+  transition: background .15s, color .15s;
+}
+.icon-btn:hover { background: var(--surface-3); color: var(--text); }
+.icon-btn > span { width: 18px; height: 18px; display: block; }
+
+.banner {
+  display: flex; align-items: flex-start; gap: 10px;
+  margin: 16px 24px -4px; padding: 11px 14px; border-radius: var(--radius);
+  font-size: 12.5px; line-height: 1.6; border: 1px solid transparent;
+}
+.banner > span:first-child { width: 16px; height: 16px; flex: 0 0 auto; margin-top: 2px; display: block; }
+.banner-error { background: var(--error-soft); border-color: color-mix(in srgb, var(--error) 34%, transparent); color: var(--error); }
+.banner-warn { background: var(--warning-soft); border-color: color-mix(in srgb, var(--warning) 34%, transparent); color: var(--warning); }
+.banner .x { margin-left: auto; cursor: pointer; opacity: .7; background: none; border: none; color: inherit; font-size: 15px; line-height: 1; }
+
+.content { flex: 1; overflow-y: auto; padding: 20px 24px 32px; }
+.wrap { max-width: 1180px; }
+
+/* ---------- 卡片 ---------- */
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-1);
+}
+.card-head {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 16px 20px 0;
+}
+.card-title { font-size: 15px; font-weight: 600; }
+.card-sub { font-size: 12px; color: var(--text-3); margin-top: 3px; line-height: 1.6; }
+.card-head .actions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+.card-body { padding: 16px 20px; }
+.card-foot {
+  padding: 12px 20px; border-top: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+.card-foot .grow { flex: 1; }
+
+/* ---------- 按钮 ---------- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  height: 38px; padding: 0 16px; border-radius: 8px; border: 1px solid transparent;
+  background: transparent; color: var(--text); font-family: inherit;
+  font-size: 13.5px; font-weight: 500; cursor: pointer; white-space: nowrap;
+  transition: background .15s, border-color .15s, color .15s, opacity .15s;
+}
+.btn:hover { background: var(--surface-3); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn > span { width: 16px; height: 16px; display: block; }
+.btn-filled { background: var(--primary); color: var(--primary-contrast); }
+.btn-filled:hover { background: var(--primary-strong); }
+.btn-tonal { background: var(--primary-soft); color: var(--primary); }
+.btn-tonal:hover { background: color-mix(in srgb, var(--primary) 24%, transparent); }
+.btn-outlined { border-color: var(--border-strong); }
+.btn-danger { color: var(--error); }
+.btn-danger:hover { background: var(--error-soft); }
+.btn-sm { height: 30px; padding: 0 10px; font-size: 12.5px; border-radius: 7px; }
+.btn-sm > span { width: 14px; height: 14px; }
+
+/* ---------- 表单 ---------- */
+.field, .select {
+  width: 100%; height: 40px; padding: 0 12px;
+  background: var(--surface-2); color: var(--text);
+  border: 1px solid var(--border-strong); border-radius: 8px;
+  font-family: inherit; font-size: 13.5px; outline: none;
+  transition: border-color .15s, box-shadow .15s, background .15s;
+}
+.field::placeholder { color: var(--text-3); }
+.field:focus, .select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-soft);
+  background: var(--surface);
+}
+textarea.field { height: auto; padding: 10px 12px; line-height: 1.7; resize: vertical; }
+.select { appearance: none; padding-right: 30px;
+  background-image: linear-gradient(45deg, transparent 50%, var(--text-3) 50%), linear-gradient(135deg, var(--text-3) 50%, transparent 50%);
+  background-position: calc(100% - 16px) 17px, calc(100% - 11px) 17px;
+  background-size: 5px 5px, 5px 5px; background-repeat: no-repeat;
+}
+.label { display: block; font-size: 12px; color: var(--text-2); margin-bottom: 6px; font-weight: 500; }
+.label .req { color: var(--error); }
+.hint { font-size: 11.5px; color: var(--text-3); margin-top: 6px; line-height: 1.6; }
+.grid { display: grid; gap: 14px; }
+.grid-2 { grid-template-columns: 1fr 1fr; }
+.grid-3 { grid-template-columns: repeat(3, 1fr); }
+@media (max-width: 900px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+
+.check { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-2); cursor: pointer; }
+.check input { width: 16px; height: 16px; accent-color: var(--primary); }
+
+/* ---------- 芯片 ---------- */
+.chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  height: 22px; padding: 0 9px; border-radius: 999px;
+  font-size: 11.5px; font-weight: 500; white-space: nowrap;
+  background: var(--surface-3); color: var(--text-2);
+  border: none; font-family: inherit;
+}
+.chip-primary { background: var(--primary-soft); color: var(--primary); }
+.chip-success { background: var(--success-soft); color: var(--success); }
+.chip-warning { background: var(--warning-soft); color: var(--warning); }
+.chip-error { background: var(--error-soft); color: var(--error); }
+.chip-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; display: inline-block; }
+
+/* ---------- 机器人卡 ---------- */
+.bot-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+.bot-card { cursor: pointer; transition: border-color .15s, box-shadow .15s, transform .15s; }
+.bot-card:hover { border-color: color-mix(in srgb, var(--primary) 45%, transparent); box-shadow: var(--shadow-2); transform: translateY(-1px); }
+.bot-head { display: flex; gap: 12px; padding: 16px 18px 0; }
+.avatar {
+  width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center;
+  font-size: 19px; font-weight: 600; background: var(--primary-soft); color: var(--primary);
+  flex: 0 0 auto; overflow: hidden; user-select: none;
+}
+.bot-name { font-size: 15px; font-weight: 600; }
+.bot-desc { font-size: 12px; color: var(--text-3); margin-top: 3px; line-height: 1.6;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.bot-chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 12px 18px 0; }
+.bot-foot {
+  display: flex; align-items: center; gap: 14px;
+  padding: 12px 18px; margin-top: 14px; border-top: 1px solid var(--border);
+  font-size: 11.5px; color: var(--text-3);
+}
+.bot-foot > span:last-child { width: 15px; height: 15px; display: block; }
+
+/* ---------- 页签 ---------- */
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 18px; }
+.tab {
+  padding: 10px 14px; font-size: 13.5px; color: var(--text-2); cursor: pointer;
+  border-bottom: 2px solid transparent; margin-bottom: -1px; user-select: none;
+  transition: color .15s, border-color .15s;
+}
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--primary); border-color: var(--primary); font-weight: 600; }
+
+/* ---------- 详情头 ---------- */
+.detail-head { display: flex; align-items: center; gap: 14px; }
+.detail-head .avatar { width: 52px; height: 52px; font-size: 26px; border-radius: 14px; }
+.detail-title { font-size: 18px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.detail-sub { font-size: 12.5px; color: var(--text-3); margin-top: 3px; }
+.detail-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+
+/* ---------- 版本 ---------- */
+.version-row {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px;
+  background: var(--surface-2); margin-bottom: 8px;
+}
+.version-row.active { border-color: color-mix(in srgb, var(--success) 40%, transparent); background: var(--success-soft); }
+.version-no { font-weight: 600; font-size: 12.5px; }
+.version-text { font-size: 12px; color: var(--text-2); line-height: 1.6; margin-top: 4px;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.version-note { font-size: 11px; color: var(--text-3);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ---------- 渠道 ---------- */
+.channel-card { padding: 16px 18px; }
+.channel-top { display: flex; gap: 12px; }
+.channel-icon { width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center;
+  background: var(--surface-3); font-size: 19px; flex: 0 0 auto; }
+.channel-name { font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.channel-desc { font-size: 12px; color: var(--text-3); margin-top: 3px; line-height: 1.6; }
+.channel-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.channel-meta { font-size: 11.5px; color: var(--text-3); margin-top: 10px; }
+.channel-error { font-size: 11.5px; color: var(--error); margin-top: 8px; line-height: 1.6; }
+
+/* ---------- 记忆 ---------- */
+.memory-row { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px;
+  border: 1px solid var(--border); border-radius: 10px; margin-bottom: 8px; background: var(--surface-2); }
+.memory-text { flex: 1; font-size: 13px; line-height: 1.6; }
+.memory-meta { display: flex; gap: 12px; font-size: 11px; color: var(--text-3); margin-top: 6px; }
+
+/* ---------- 对话 ---------- */
+.chat-layout { display: grid; grid-template-columns: 1fr 340px; gap: 16px; height: calc(100vh - 244px); min-height: 420px; }
+@media (max-width: 1100px) { .chat-layout { grid-template-columns: 1fr; height: auto; } }
+.chat-card { display: flex; flex-direction: column; min-height: 0; }
+.chat-scroll { flex: 1; overflow-y: auto; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px; }
+.bubble { max-width: 78%; padding: 10px 14px; border-radius: 12px; font-size: 13.5px; line-height: 1.7; }
+/* 只让正文保留换行：把 pre-wrap 放在气泡上会把模板缩进里的空白也渲染成空行，
+   气泡于是被撑成一个大方块 */
+.bubble-text { white-space: pre-wrap; }
+.bubble.user { align-self: flex-end; background: var(--primary-soft); color: var(--text);
+  border: 1px solid color-mix(in srgb, var(--primary) 30%, transparent); border-bottom-right-radius: 4px; }
+.bubble.bot { align-self: flex-start; background: var(--surface-2); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+.bubble-meta { font-size: 11px; color: var(--text-3); margin-top: 6px; }
+.bubble-err { font-size: 11px; color: var(--error); margin-top: 6px; }
+.chat-input { display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--border); align-items: flex-end; }
+.chat-input textarea { flex: 1; }
+.trace-block { margin-bottom: 14px; }
+.trace-label { font-size: 11.5px; color: var(--text-3); margin-bottom: 6px; }
+.trace-value { font-size: 13px; }
+
+/* ---------- 模型服务工作台 ---------- */
+.workbench { display: grid; grid-template-columns: 268px 1fr; gap: 16px; align-items: start; }
+@media (max-width: 1000px) { .workbench { grid-template-columns: 1fr; } }
+.source-list { padding: 8px; }
+.source-item {
+  display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 9px;
+  cursor: pointer; font-size: 13.5px; color: var(--text-2);
+  transition: background .15s, color .15s; margin-bottom: 2px;
+}
+.source-item:hover { background: var(--surface-3); color: var(--text); }
+.source-item.active { background: var(--primary-soft); color: var(--primary); font-weight: 600; }
+.source-item > span:first-child { width: 17px; height: 17px; flex: 0 0 auto; display: block; }
+.source-item .grow { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.source-item small { display: block; font-size: 11px; color: var(--text-3); font-weight: 400;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ---------- 日志 ---------- */
+.logbox {
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px;
+  padding: 12px; max-height: 52vh; overflow-y: auto;
+}
+.log-line { display: grid; grid-template-columns: 62px 44px 1fr; gap: 8px;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 11.5px; line-height: 1.7; }
+.log-time { color: var(--text-3); }
+.log-level { color: var(--text-3); }
+.log-line.error .log-level, .log-line.error .log-msg { color: var(--error); }
+.log-line.warn .log-level, .log-line.warn .log-msg { color: var(--warning); }
+.log-detail { grid-column: 3; color: var(--text-3); white-space: pre-wrap; word-break: break-all; }
+
+/* ---------- 弹窗 ---------- */
+.overlay {
+  position: fixed; inset: 0; z-index: 60; display: grid; place-items: center;
+  background: rgba(0,0,0,.52); backdrop-filter: blur(2px); padding: 24px;
+}
+.dialog {
+  width: 100%; max-width: 560px; max-height: 86vh; display: flex; flex-direction: column;
+  background: var(--surface); border-radius: var(--radius-lg);
+  border: 1px solid var(--border); box-shadow: var(--shadow-2);
+}
+.dialog.wide { max-width: 720px; }
+.dialog-head { padding: 20px 22px 0; }
+.dialog-title { font-size: 16px; font-weight: 600; }
+.dialog-sub { font-size: 12px; color: var(--text-3); margin-top: 4px; line-height: 1.6; }
+.dialog-body { padding: 18px 22px; overflow-y: auto; }
+.dialog-actions { padding: 14px 22px 18px; display: flex; align-items: center; gap: 8px; }
+.dialog-actions .grow { flex: 1; }
+.dialog-error { font-size: 12px; color: var(--error); }
+
+/* ---------- 运行概览 / 统计 ---------- */
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; }
+.kpi { padding: 16px 18px; }
+.kpi-label { font-size: 12px; color: var(--text-3); }
+.kpi-value { font-size: 25px; font-weight: 600; margin-top: 7px; letter-spacing: -.02em; line-height: 1.15; }
+.kpi-value small { font-size: 13px; font-weight: 500; color: var(--text-3); margin-left: 2px; }
+.kpi-note { font-size: 11.5px; color: var(--text-3); margin-top: 7px; }
+
+.chart { height: 176px; display: flex; align-items: flex-end; gap: 6px; padding-top: 6px; }
+.bar-col { flex: 1; height: 100%; display: flex; align-items: flex-end; gap: 2px; }
+.bar {
+  flex: 1; min-height: 0; border-radius: 4px 4px 0 0; position: relative;
+  background: linear-gradient(180deg, var(--primary), color-mix(in srgb, var(--primary) 45%, transparent));
+  transition: height .25s ease;
+}
+.bar.calls { background: linear-gradient(180deg, var(--warning), color-mix(in srgb, var(--warning) 45%, transparent)); }
+.bar:hover { filter: brightness(1.15); }
+.chart-x { display: flex; gap: 6px; margin-top: 8px; }
+.chart-x span { flex: 1; text-align: center; font-size: 10px; color: var(--text-3); }
+.legend { display: flex; gap: 14px; font-size: 11.5px; color: var(--text-3); }
+.legend i { width: 8px; height: 8px; border-radius: 2px; display: inline-block; margin-right: 5px; }
+
+.linechart { width: 100%; height: 168px; display: block; }
+.linechart .grid-line { stroke: var(--border); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.linechart .area { fill: color-mix(in srgb, var(--primary) 16%, transparent); stroke: none; }
+.linechart .line { fill: none; stroke: var(--primary); stroke-width: 2; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+
+.rank-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; }
+.rank-name { width: 132px; font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rank-bar { flex: 1; height: 8px; background: var(--surface-3); border-radius: 99px; overflow: hidden; }
+.rank-fill { height: 100%; background: var(--primary); border-radius: 99px; }
+.rank-fill.alt { background: var(--warning); }
+.rank-value { width: 78px; text-align: right; font-size: 12px; color: var(--text-2); font-variant-numeric: tabular-nums; }
+
+.stat-big { font-size: 30px; font-weight: 600; letter-spacing: -.02em; line-height: 1.2; }
+.stat-big small { font-size: 13px; color: var(--text-3); font-weight: 500; }
+.meta-list { display: grid; gap: 9px; margin-top: 14px; }
+.meta-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-3); }
+.meta-row b { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.activity-row {
+  display: grid; grid-template-columns: 1fr 96px 84px 60px; gap: 10px;
+  padding: 9px 0; font-size: 12px; border-top: 1px solid var(--border); align-items: center;
+}
+.activity-row:first-child { border-top: none; }
+.activity-row .who { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.text-ok { color: var(--success); }
+.text-error { color: var(--error); }
+
+/* ---------- 其它 ---------- */
+.mono { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 12px; }
+.row { display: flex; align-items: center; gap: 10px; }
+.spacer { flex: 1; }
+.muted { color: var(--text-3); }
+.small { font-size: 12px; }
+.empty { padding: 40px 20px; text-align: center; color: var(--text-3); font-size: 12.5px; line-height: 1.8; }
+.empty .big { font-size: 26px; margin-bottom: 8px; opacity: .8; }
+.divider { height: 1px; background: var(--border); margin: 14px 0; }
+* { scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
+::-webkit-scrollbar { width: 9px; height: 9px; }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 99px; }
+::-webkit-scrollbar-track { background: transparent; }
+.stack > * + * { margin-top: 16px; }
+</style>
+</head>
+<body>
+<div class="app" x-data="tank()" x-init="boot()" x-cloak>
+
+  <!-- ==================== 侧栏 ==================== -->
+  <aside class="drawer">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"
+             stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 12c2.5-3.5 5.5-5 9-5 4.5 0 8 2.5 11 5-3 2.5-6.5 5-11 5-3.5 0-6.5-1.5-9-5Z"/>
+          <path d="M16 12h.01"/><path d="M22 9.5 19.5 12 22 14.5"/>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-name">鱼缸</div>
+        <div class="brand-sub">FishTank Console</div>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <div class="nav-group">控制台</div>
+      <div class="nav-item" :class="route==='overview' && 'active'" @click="go('overview')">
+        <span x-html="icon('dashboard')"></span><span class="grow">运行概览</span>
+      </div>
+      <div class="nav-item" :class="route==='bots' && 'active'" @click="go('bots')">
+        <span x-html="icon('bot')"></span><span class="grow">机器人</span>
+      </div>
+      <div class="nav-item" :class="route==='providers' && 'active'" @click="go('providers')">
+        <span x-html="icon('box')"></span><span class="grow">模型服务</span>
+        <span class="chip chip-warning" x-show="!providers.length">待配置</span>
+      </div>
+
+      <div class="nav-group">系统</div>
+      <div class="nav-item" :class="route==='settings' && 'active'" @click="go('settings')">
+        <span x-html="icon('sliders')"></span><span class="grow">运行设置</span>
+      </div>
+      <div class="nav-item" :class="route==='about' && 'active'" @click="go('about')">
+        <span x-html="icon('info')"></span><span class="grow">关于</span>
+      </div>
+    </nav>
+
+    <div class="drawer-foot">
+      <div class="row" style="gap:7px">
+        <span class="chip-dot" :style="online ? 'background:var(--success); color:var(--success)' : 'background:var(--warning); color:var(--warning)'"></span>
+        <span x-text="online ? '后端已连接' : '离线模式'"></span>
+      </div>
+      <div>默认模型 · <b x-text="health.llm_mode || '—'"></b></div>
+    </div>
+  </aside>
+
+  <!-- ==================== 主区 ==================== -->
+  <div class="main">
+    <header class="topbar">
+      <div>
+        <h1 x-text="pageTitle()"></h1>
+        <div class="sub" x-text="pageSubtitle()"></div>
+      </div>
+      <div class="topbar-actions">
+        <button class="icon-btn" @click="toggleTheme()" :title="theme==='dark' ? '切换到明亮主题' : '切换到暗色主题'">
+          <span x-html="icon(theme==='dark' ? 'sun' : 'moon')"></span>
+        </button>
+        <button class="icon-btn" @click="refreshAll()" title="刷新">
+          <span x-html="icon('refresh')"></span>
+        </button>
+      </div>
+    </header>
+
+    <div class="banner banner-error" x-show="errorMsg">
+      <span x-html="icon('alert')"></span>
+      <span x-text="errorMsg"></span>
+      <button class="x" @click="errorMsg=''">✕</button>
+    </div>
+
+    <div class="content">
+
+      <!-- ==================== 运行概览 ==================== -->
+      <section x-show="route==='overview'" class="wrap stack">
+        <div class="kpi-grid">
+          <div class="card kpi">
+            <div class="kpi-label">平台实例数</div>
+            <div class="kpi-value" x-text="(ov.platforms ? ov.platforms.running : 0) + ' / ' + (ov.platforms ? ov.platforms.total : 0)"></div>
+            <div class="kpi-note">已运行 / 已绑定</div>
+          </div>
+          <div class="card kpi">
+            <div class="kpi-label">消息总数</div>
+            <div class="kpi-value" x-text="fmtNum(ov.message_count)"></div>
+            <div class="kpi-note" x-text="'覆盖 ' + (ov.characters || 0) + ' 个机器人'"></div>
+          </div>
+          <div class="card kpi">
+            <div class="kpi-label">今日模型调用</div>
+            <div class="kpi-value" x-text="fmtNum(ov.today ? ov.today.model_calls : 0)"><small></small></div>
+            <div class="kpi-note" x-text="fmtNum(ov.today ? ov.today.tokens : 0) + ' Tokens'"></div>
+          </div>
+          <div class="card kpi">
+            <div class="kpi-label">今日平均响应</div>
+            <div class="kpi-value"><span x-text="fmtMs(ov.today ? ov.today.avg_latency_ms : 0)"></span></div>
+            <div class="kpi-note" x-text="'今日消息 ' + fmtNum(ov.today ? ov.today.messages : 0) + ' 条'"></div>
+          </div>
+          <div class="card kpi" x-show="ov.resources && ov.resources.available">
+            <div class="kpi-label">进程占用</div>
+            <div class="kpi-value"><span x-text="ov.resources ? (ov.resources.memory_mb || 0) : 0"></span><small>MB</small></div>
+            <div class="kpi-note" x-text="'CPU ' + (ov.resources ? ov.resources.cpu_percent : 0) + '% · 系统 ' + ((ov.resources && ov.resources.system_memory_mb) || 0) + 'MB'"></div>
+          </div>
+          <div class="card kpi">
+            <div class="kpi-label">运行时间</div>
+            <div class="kpi-value" x-text="ov.uptime_text || '—'"></div>
+            <div class="kpi-note" x-text="ov.started_at ? ('启动于 ' + fmtTime(ov.started_at) + ' · v' + (ov.version || '')) : ''"></div>
+          </div>
+        </div>
+
+        <!-- 消息趋势 -->
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <div class="card-title">消息趋势</div>
+              <div class="card-sub" x-text="stats.range_label + '共 ' + fmtNum(stats.message_count) + ' 条消息 · ' + fmtNum(stats.model ? stats.model.calls : 0) + ' 次模型调用'"></div>
+            </div>
+            <div class="actions">
+              <div class="legend">
+                <span><i style="background:var(--primary)"></i>消息</span>
+                <span><i style="background:var(--warning)"></i>模型调用</span>
+              </div>
+              <div class="row" style="gap:4px; margin-left:8px">
+                <template x-for="r in statRanges" :key="r.key">
+                  <button class="btn btn-sm" :class="stats.range === r.key ? 'btn-tonal' : ''"
+                          @click="setRange(r.key)" x-text="r.label"></button>
+                </template>
+              </div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="chart">
+              <template x-for="p in (stats.series || [])" :key="p.date">
+                <div class="bar-col" :title="p.date + '  消息 ' + p.messages + ' · 调用 ' + p.calls + ' · ' + p.tokens + ' tokens'">
+                  <div class="bar" :style="'height:' + barPct(p, 'messages') + '%'"></div>
+                  <div class="bar calls" :style="'height:' + barPct(p, 'calls') + '%'"></div>
+                </div>
+              </template>
+            </div>
+            <div class="chart-x">
+              <template x-for="p in (stats.series || [])" :key="'x' + p.date">
+                <span x-text="p.label"></span>
+              </template>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid" style="grid-template-columns:1fr 1fr">
+          <!-- 平台排名 -->
+          <div class="card">
+            <div class="card-head"><div><div class="card-title">平台消息排名</div>
+              <div class="card-sub" x-text="stats.range_label"></div></div></div>
+            <div class="card-body">
+              <div class="empty" x-show="!(stats.by_channel || []).length" style="padding:24px 0">还没有消息数据</div>
+              <template x-for="c in (stats.by_channel || [])" :key="c.key">
+                <div class="rank-row">
+                  <div class="rank-name"><span x-text="c.icon"></span> <span x-text="c.name"></span></div>
+                  <div class="rank-bar"><div class="rank-fill" :style="'width:' + rankPct(stats.by_channel, c.count) + '%'"></div></div>
+                  <div class="rank-value" x-text="fmtNum(c.count) + ' 条'"></div>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <!-- 模型排名 -->
+          <div class="card">
+            <div class="card-head"><div><div class="card-title">模型用量排名</div>
+              <div class="card-sub" x-text="stats.range_label + ' · 按 Tokens'"></div></div></div>
+            <div class="card-body">
+              <div class="empty" x-show="!(stats.by_model || []).length" style="padding:24px 0">还没有模型调用数据</div>
+              <template x-for="m in (stats.by_model || [])" :key="m.name">
+                <div class="rank-row">
+                  <div class="rank-name" x-text="m.name"></div>
+                  <div class="rank-bar"><div class="rank-fill alt" :style="'width:' + rankPct(stats.by_model, m.tokens, 'tokens') + '%'"></div></div>
+                  <div class="rank-value" x-text="fmtNum(m.tokens)"></div>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+
+        <!-- 模型调用趋势 + Token 总量 -->
+        <div class="grid" style="grid-template-columns:1.55fr 1fr">
+          <div class="card">
+            <div class="card-head">
+              <div><div class="card-title">模型调用趋势</div>
+                <div class="card-sub" x-text="stats.range_label + '的调用次数（每天）'"></div></div>
+            </div>
+            <div class="card-body">
+              <svg class="linechart" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <line class="grid-line" x1="0" y1="25" x2="100" y2="25"></line>
+                <line class="grid-line" x1="0" y1="50" x2="100" y2="50"></line>
+                <line class="grid-line" x1="0" y1="75" x2="100" y2="75"></line>
+                <polygon class="area" :points="lineArea(stats.series, 'calls')"></polygon>
+                <polyline class="line" :points="linePoints(stats.series, 'calls')"></polyline>
+              </svg>
+              <div class="chart-x">
+                <template x-for="p in (stats.series || [])" :key="'l' + p.date">
+                  <span x-text="p.label"></span>
+                </template>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <div><div class="card-title" x-text="stats.range_label + '模型调用总量'"></div>
+                <div class="card-sub" x-text="'共 ' + fmtNum(stats.model ? stats.model.calls : 0) + ' 次调用'"></div></div>
+            </div>
+            <div class="card-body">
+              <div class="stat-big"><span x-text="fmtNum(stats.model ? stats.model.tokens : 0)"></span><small> Tokens</small></div>
+              <div class="meta-list">
+                <div class="meta-row"><span>输入 / 输出</span><b x-text="fmtNum(stats.model ? stats.model.prompt_tokens : 0) + ' / ' + fmtNum(stats.model ? stats.model.completion_tokens : 0)"></b></div>
+                <div class="meta-row"><span>平均响应时间</span><b x-text="fmtMs(stats.model ? stats.model.avg_latency_ms : 0)"></b></div>
+                <div class="meta-row"><span>平均每分钟输出（TPM）</span><b x-text="(stats.model ? stats.model.tpm : 0) + ' tokens'"></b></div>
+                <div class="meta-row"><span>调用成功率</span><b x-text="(stats.model ? stats.model.success_rate : 100) + '%'"></b></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid" style="grid-template-columns:1.3fr 1fr">
+          <!-- 会话 Top 10 -->
+          <div class="card">
+            <div class="card-head"><div><div class="card-title" x-text="stats.range_label + '会话用量 Top 10'"></div>
+              <div class="card-sub">按 Tokens 排序，会话 = 平台 + 聊天对象</div></div></div>
+            <div class="card-body">
+              <div class="empty" x-show="!(stats.sessions || []).length" style="padding:24px 0">还没有会话数据</div>
+              <template x-for="s in (stats.sessions || [])" :key="s.session_key">
+                <div class="rank-row">
+                  <div class="rank-name" :title="s.session_key" x-text="s.character + ' · ' + s.channel_label"></div>
+                  <div class="rank-bar"><div class="rank-fill" :style="'width:' + rankPct(stats.sessions, s.tokens, 'tokens') + '%'"></div></div>
+                  <div class="rank-value" x-text="fmtNum(s.tokens) + ' / ' + s.calls + '次'"></div>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <!-- 最近对话 -->
+          <div class="card">
+            <div class="card-head"><div><div class="card-title">最近对话</div>
+              <div class="card-sub">本次运行的最新记录</div></div></div>
+            <div class="card-body" style="max-height:300px; overflow-y:auto">
+              <div class="empty" x-show="!(ov.recent || []).length" style="padding:24px 0">还没有对话记录</div>
+              <template x-for="(r,i) in (ov.recent || [])" :key="i">
+                <div class="activity-row">
+                  <div class="who" x-text="r.character"></div>
+                  <div class="muted" x-text="r.channel_label"></div>
+                  <div class="muted" x-text="fmtMs(r.latency_ms)"></div>
+                  <div :class="r.status === 'done' ? 'text-ok' : 'text-error'" style="text-align:right"
+                       x-text="r.status === 'done' ? '✓' : '✕'"></div>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== 机器人列表 ==================== -->
+      <section x-show="route==='bots'" class="wrap">
+        <div class="banner banner-warn" x-show="!providers.length" style="margin:0 0 16px">
+          <span x-html="icon('key')"></span>
+          <div>
+            <b>还没有配置模型 API Key</b> —— 机器人当前用内置离线 Mock 回复，不会真的调用大模型。
+            填一个 Base URL + Key 就能接真模型，改完即时生效。
+          </div>
+          <button class="btn btn-filled btn-sm" style="margin-left:auto" @click="goProvidersConfig()">去配置</button>
+        </div>
+
+        <div class="row" style="margin-bottom:16px">
+          <div class="small muted">一个机器人 = 一套人格 + 一个模型服务 + 若干平台绑定。绑定 QQ / 企业微信后即可在那边直接聊天。</div>
+          <div class="spacer"></div>
+          <button class="btn btn-filled" @click="openCreate()">
+            <span x-html="icon('plus')"></span>新建机器人
+          </button>
+        </div>
+
+        <div class="empty card" x-show="!characters.length && !loading">
+          <div class="big">🐠</div>
+          还没有机器人，点右上角「新建机器人」开始。
+        </div>
+
+        <div class="bot-grid">
+          <template x-for="c in characters" :key="c.id">
+            <div class="card bot-card" @click="openBot(c.id)">
+              <div class="bot-head">
+                <div class="avatar" :style="avatarTint(c)" x-text="avatarText(c.name)"></div>
+                <div style="min-width:0">
+                  <div class="bot-name" x-text="c.name"></div>
+                  <div class="bot-desc" x-text="c.one_liner || '（还没写一句话设定）'"></div>
+                </div>
+              </div>
+              <div class="bot-chips">
+                <span class="chip chip-primary" x-text="'v' + c.active_version_no"></span>
+                <span class="chip" :class="c.model_provider_name === '离线 Mock' ? 'chip-warning' : 'chip-success'"
+                      x-text="c.model_provider_name"></span>
+                <span class="chip" :class="c.connected_count ? 'chip-success' : ''"
+                      x-text="c.connected_count ? (c.connected_count + ' 个平台在线') : '未绑定平台'"></span>
+              </div>
+              <div class="bot-foot">
+                <span x-text="c.memory_count + ' 条记忆'"></span>
+                <span x-text="c.conversation_count + ' 次对话'"></span>
+                <span class="spacer"></span>
+                <span x-html="icon('chevron-right')"></span>
+              </div>
+            </div>
+          </template>
+        </div>
+      </section>
+
+      <!-- ==================== 机器人详情 ==================== -->
+      <section x-show="route==='bot'" class="wrap">
+        <template x-if="detail">
+        <div>
+        <div class="row" style="margin-bottom:14px; align-items:center">
+          <button class="icon-btn" @click="go('bots')" title="返回"><span x-html="icon('arrow-left')"></span></button>
+          <div class="detail-head" style="margin:0; flex:1">
+            <div class="avatar" :style="avatarTint(detail.character)"
+                 x-text="avatarText(detail.character.name)"></div>
+            <div style="min-width:0">
+              <div class="detail-title">
+                <span x-text="detail && detail.character.name"></span>
+                <button class="btn btn-outlined btn-sm" @click="openEdit()">改名</button>
+              </div>
+              <div class="detail-sub" x-text="detail && (detail.character.one_liner || '（还没写一句话设定）')"></div>
+            </div>
+            <div class="detail-actions">
+              <button class="chip" :class="detail.model && detail.model.is_fallback ? 'chip-warning' : 'chip-success'"
+                      style="cursor:pointer; height:28px" @click="goProvidersConfig()" title="点一下配置模型服务"
+                      x-text="detail.model
+                        ? (detail.model.is_fallback ? '未接模型 · 离线 Mock' : detail.model.provider_name + ' · ' + detail.model.model)
+                        : ''"></button>
+              <button class="btn btn-tonal btn-sm" @click="goTab('chat')">
+                <span x-html="icon('chat')"></span>试聊
+              </button>
+              <button class="btn btn-danger btn-sm" @click="deleteBot()">删除</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="tabs">
+          <template x-for="t in botTabs" :key="t.key">
+            <div class="tab" :class="tab===t.key && 'active'" @click="goTab(t.key)" x-text="t.label"></div>
+          </template>
+        </div>
+
+        <!-- ---- 人格 ---- -->
+        <div x-show="tab==='persona'" class="grid" style="grid-template-columns:1fr 330px; gap:16px; align-items:start">
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <div class="card-title">人格设定</div>
+                <div class="card-sub">直接写系统提示词（AstrBot 的「人格」写法）；留空则使用下方的结构化设定</div>
+              </div>
+              <div class="actions">
+                <span class="chip" :class="personaDirty ? 'chip-warning' : ''"
+                      x-text="personaDirty ? '有未保存的改动' : '已保存'"></span>
+              </div>
+            </div>
+            <div class="card-body">
+              <textarea class="field" rows="9" x-model="persona.system_prompt" @input="personaDirty = true"
+                        placeholder="例：你是阿泽养在鱼缸里的一条咸鱼，叫咸鱼酱。说话懒懒的、爱用叠词，三句不离躺平，但会认真记住阿泽说过的事。"></textarea>
+
+              <div class="divider"></div>
+
+              <div class="grid grid-2">
+                <div>
+                  <label class="label">性格标签（逗号分隔）</label>
+                  <input class="field" x-model="persona.personality_tags" @input="personaDirty = true" placeholder="温柔、话少、爱用叠词">
+                </div>
+                <div>
+                  <label class="label">口头禅（逗号分隔）</label>
+                  <input class="field" x-model="persona.catchphrases" @input="personaDirty = true" placeholder="我在呀、慢慢来">
+                </div>
+                <div>
+                  <label class="label">说话风格</label>
+                  <input class="field" x-model="persona.speech_style" @input="personaDirty = true" placeholder="简短、口语化、爱用叠词">
+                </div>
+                <div>
+                  <label class="label">禁忌话题（逗号分隔）</label>
+                  <input class="field" x-model="persona.taboo_topics" @input="personaDirty = true" placeholder="催促、评价身材">
+                </div>
+                <div style="grid-column:1/-1">
+                  <label class="label">背景故事</label>
+                  <textarea class="field" rows="3" x-model="persona.backstory" @input="personaDirty = true"></textarea>
+                </div>
+                <div style="grid-column:1/-1">
+                  <label class="label">版本备注</label>
+                  <input class="field" x-model="persona.note" placeholder="这次改了什么？">
+                </div>
+              </div>
+            </div>
+            <div class="card-foot">
+              <button class="btn btn-filled" :disabled="saving" @click="savePersona()">
+                <span x-html="icon('save')"></span>保存并生成新版本
+              </button>
+              <div class="grow"></div>
+              <span class="small muted">每次保存都会留一份快照，随时可以回滚</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head"><div><div class="card-title">版本历史</div></div></div>
+            <div class="card-body" style="max-height:560px; overflow-y:auto">
+              <template x-for="v in detail.versions" :key="v.id">
+                <div class="version-row" :class="v.is_active && 'active'">
+                  <div style="flex:1; min-width:0">
+                    <div class="row" style="gap:8px">
+                      <span class="version-no" x-text="'v' + v.version_no"></span>
+                      <span class="chip chip-success" x-show="v.is_active">当前</span>
+                      <span class="spacer"></span>
+                      <span class="small muted" x-text="fmtTime(v.created_at)"></span>
+                    </div>
+                    <div class="version-text" x-text="v.system_prompt || v.speech_style || v.note || '（结构化人设）'"></div>
+                    <div class="row" style="gap:8px; margin-top:6px">
+                      <span class="version-note" style="flex:1" x-text="v.note"></span>
+                      <button x-show="!v.is_active" class="btn btn-outlined btn-sm" @click="rollback(v)">回滚</button>
+                    </div>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+
+        <!-- ---- 平台 ---- -->
+        <div x-show="tab==='channels'" class="grid" style="grid-template-columns:1fr 340px; gap:16px; align-items:start">
+          <div class="stack">
+            <div class="small muted">
+              只接官方开放通道：QQ 官方机器人、企业微信智能机器人。两者都是「应用凭证 + 长连接」，不需要公网 IP。
+            </div>
+            <template x-for="p in platforms" :key="p.channel_type">
+              <div class="card channel-card" :style="!p.enabled ? 'opacity:.6' : ''">
+                <div class="channel-top">
+                  <div class="channel-icon" x-text="p.icon"></div>
+                  <div style="flex:1; min-width:0">
+                    <div class="channel-name">
+                      <span x-text="p.label"></span>
+                      <span class="chip" x-show="p.connection_mode" x-text="p.connection_mode"></span>
+                      <span class="chip chip-warning" x-show="p.requires_placeholder">需占位</span>
+                      <span class="chip" x-show="p.enabled && !p.supports_proactive">无主动消息</span>
+                      <span class="spacer"></span>
+                      <span class="chip" :class="statusChip(bindingOf(p.channel_type))"
+                            x-text="statusLabel(bindingOf(p.channel_type))"></span>
+                    </div>
+                    <div class="channel-desc" x-text="p.description"></div>
+                    <div class="channel-desc" style="color:var(--warning)" x-show="!p.enabled" x-text="p.disabled_reason"></div>
+
+                    <div class="channel-actions" x-show="p.enabled">
+                      <button class="btn btn-outlined btn-sm" @click="openBind(p)"
+                              x-text="bindingOf(p.channel_type) ? '修改凭证' : '填写凭证并绑定'"></button>
+                      <button class="btn btn-filled btn-sm" x-show="bindingOf(p.channel_type)"
+                              :disabled="channelBusy[(bindingOf(p.channel_type) || {}).id]
+                                         || (bindingOf(p.channel_type) && bindingOf(p.channel_type).status === 'connected')"
+                              @click="connectChannel(p.channel_type)"
+                              x-text="channelBusy[(bindingOf(p.channel_type) || {}).id] ? '连接中…' : '连接'"></button>
+                      <button class="btn btn-outlined btn-sm"
+                              x-show="bindingOf(p.channel_type) && bindingOf(p.channel_type).status === 'connected'"
+                              @click="disconnectChannel(p.channel_type)">断开</button>
+                      <button class="btn btn-outlined btn-sm"
+                              x-show="p.channel_type==='mock' && bindingOf('mock') && bindingOf('mock').status==='connected'"
+                              @click="openSimulate()">模拟消息</button>
+                      <button class="btn btn-outlined btn-sm" x-show="bindingOf(p.channel_type)"
+                              @click="openLogs(p.channel_type)">运行日志</button>
+                      <button class="btn btn-danger btn-sm" x-show="bindingOf(p.channel_type)"
+                              @click="unbind(p.channel_type)">解绑</button>
+                    </div>
+
+                    <div class="channel-error" x-show="bindingOf(p.channel_type) && bindingOf(p.channel_type).last_error"
+                         x-text="(bindingOf(p.channel_type) || {}).last_error"></div>
+                    <div class="channel-meta"
+                         x-show="bindingOf(p.channel_type) && bindingOf(p.channel_type).credentials_masked
+                                && bindingOf(p.channel_type).credentials_masked !== '—'"
+                         x-text="'凭证：' + ((bindingOf(p.channel_type) || {}).credentials_masked || '')"></div>
+                  </div>
+                </div>
+              </div>
+            </template>
+          </div>
+
+          <div class="card">
+            <div class="card-head"><div><div class="card-title">接入步骤</div></div></div>
+            <div class="card-body small muted" style="line-height:1.9">
+              <ol style="margin:0; padding-left:18px">
+                <li>在开放平台创建机器人，拿到 AppID / AppSecret（企微是 BotID / Secret）。</li>
+                <li>左边点「填写凭证并绑定」，粘贴进去保存。</li>
+                <li>点「连接」，状态变成「在线」。</li>
+                <li>去 QQ / 企业微信给机器人发条消息，回来看「运行日志」。</li>
+              </ol>
+              <div class="divider"></div>
+              QQ 群聊需先开通群聊权限；企业微信需先把机器人加进会话。
+              连不上先看日志里的 errcode：凭证错、权限没开、网络不通，三种原因文案不同。
+            </div>
+          </div>
+        </div>
+
+        <!-- ---- 记忆 ---- -->
+        <div x-show="tab==='memory'" class="grid" style="grid-template-columns:1fr 320px; gap:16px; align-items:start">
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <div class="card-title">长期记忆</div>
+                <div class="card-sub">按关键词 + 置顶命中，命中结果在「调试」右栏可见</div>
+              </div>
+              <div class="actions">
+                <button class="btn btn-tonal btn-sm" @click="openMemory()">
+                  <span x-html="icon('plus')"></span>添加
+                </button>
+              </div>
+            </div>
+            <div class="card-body" style="max-height:560px; overflow-y:auto">
+              <div class="empty" x-show="!detail.memories.length">
+                还没有记忆。写几条试试，比如「用户是夜猫子，常凌晨两点还在改方案」。
+              </div>
+              <template x-for="m in detail.memories" :key="m.id">
+                <div class="memory-row">
+                  <div class="memory-text">
+                    <div x-text="m.content"></div>
+                    <div class="memory-meta">
+                      <span x-text="m.pinned ? '📌 置顶' : '普通'"></span>
+                      <span x-text="'重要度 ' + m.importance"></span>
+                      <span x-text="m.source === 'extracted' ? '对话提取' : '手动录入'"></span>
+                    </div>
+                  </div>
+                  <div class="row" style="gap:4px">
+                    <button class="btn btn-sm" @click="togglePin(m)" x-text="m.pinned ? '取消置顶' : '置顶'"></button>
+                    <button class="btn btn-sm" @click="openMemory(m)">改</button>
+                    <button class="btn btn-sm btn-danger" @click="deleteMemory(m)">删</button>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head"><div><div class="card-title">记忆怎么进上下文</div></div></div>
+            <div class="card-body small muted" style="line-height:1.9">
+              置顶的记忆每轮都注入；其余按「问题关键词命中」挑选，最多 6 条。
+              <div class="divider"></div>
+              提示词里写死了两条硬约束：只用列出的记忆、不许编造共同经历。所以删掉一条记忆，机器人就真的不记得了。
+            </div>
+          </div>
+        </div>
+
+        <!-- ---- 调试 ---- -->
+        <div x-show="tab==='chat'" class="chat-layout">
+          <div class="card chat-card">
+            <div class="card-head" style="padding-bottom:14px">
+              <div>
+                <div class="card-title">调试台</div>
+                <div class="card-sub">与真实渠道走同一条管线，只是不经过平台</div>
+              </div>
+              <div class="actions">
+                <button class="btn btn-outlined btn-sm" @click="clearChat()">清空</button>
+              </div>
+            </div>
+            <div class="chat-scroll">
+              <div class="empty" x-show="!chat.messages.length">
+                <div class="big">💬</div>
+                发一句话试试，比如「今天好累，方案又被打回了」。
+              </div>
+              <template x-for="(m,i) in chat.messages" :key="i">
+                <div class="bubble" :class="m.role==='user' ? 'user' : 'bot'">
+                  <div class="bubble-text" x-text="m.pending ? '正在思考…' : m.content"></div>
+                  <div class="bubble-meta" x-show="m.role==='assistant' && m.meta" x-text="m.meta"></div>
+                  <div class="bubble-err" x-show="m.error" x-text="m.error"></div>
+                </div>
+              </template>
+            </div>
+            <div class="chat-input">
+              <textarea class="field" rows="2" x-model="chat.input"
+                        placeholder="说点什么…（Enter 发送，Shift+Enter 换行）"
+                        @keydown.enter="onEnter($event)"></textarea>
+              <button class="btn btn-filled" style="height:40px" :disabled="chat.sending || !chat.input.trim()"
+                      @click="sendChat()">
+                <span x-html="icon('send')"></span>发送
+              </button>
+            </div>
+          </div>
+
+          <div class="card chat-card">
+            <div class="card-head" style="padding-bottom:14px">
+              <div><div class="card-title">本次回复溯源</div></div>
+            </div>
+            <div class="card-body" style="flex:1; overflow-y:auto">
+              <div class="empty" x-show="!chat.trace">
+                发一条消息后，这里会显示用了哪个人设版本、命中了哪些记忆、走的哪个模型。
+              </div>
+              <template x-if="chat.trace">
+                <div>
+                  <div class="trace-block">
+                    <div class="trace-label">人设版本</div>
+                    <div class="trace-value" x-text="'v' + chat.trace.persona_version.version_no"></div>
+                  </div>
+                  <div class="trace-block">
+                    <div class="trace-label">模型</div>
+                    <div class="trace-value"
+                         x-text="(chat.trace.model && chat.trace.model.provider) + ' / ' + (chat.trace.model && chat.trace.model.name)"></div>
+                    <div class="small muted" style="margin-top:3px"
+                         x-text="'上下文 ' + chat.trace.context_rounds + ' 轮 · ' + chat.trace.latency_ms + 'ms · tokens ' + chat.trace.usage.prompt_tokens + ' + ' + chat.trace.usage.completion_tokens"></div>
+                  </div>
+                  <div class="trace-block">
+                    <div class="trace-label">命中记忆</div>
+                    <div class="small muted" x-show="!chat.trace.hit_memories.length">本轮未命中记忆，回复仅由人设驱动。</div>
+                    <template x-for="m in chat.trace.hit_memories" :key="m.id">
+                      <div class="memory-row">
+                        <div class="memory-text">
+                          <div x-text="m.content"></div>
+                          <div class="memory-meta"><span x-text="m.reason"></span></div>
+                        </div>
+                        <button class="btn btn-sm btn-danger" @click="deleteMemoryById(m.id)">删</button>
+                      </div>
+                    </template>
+                  </div>
+                  <div class="banner banner-warn" style="margin:0" x-show="chat.trace.warning" x-text="chat.trace.warning"></div>
+                </div>
+              </template>
+            </div>
+            <div class="card-foot" style="display:block">
+              <div class="small muted" style="margin-bottom:10px">这个机器人用哪个模型</div>
+              <select class="select" x-model="modelForm.model_provider_id" @change="saveModel()">
+                <option value="">跟随全局默认</option>
+                <template x-for="p in providers" :key="p.id">
+                  <option :value="p.id" x-text="p.name + ' / ' + p.model"></option>
+                </template>
+              </select>
+              <div class="row" style="margin-top:10px; gap:8px">
+                <span class="small muted">上下文轮数</span>
+                <input type="number" class="field" style="width:90px; height:34px" min="0" max="50"
+                       x-model.number="modelForm.context_rounds" @change="saveModel()">
+                <span class="spacer"></span>
+                <div x-show="!providers.length">
+                  <button class="btn btn-tonal btn-sm" @click="goProvidersConfig()">配置 API Key</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        </div>
+        </template>
+      </section>
+
+      <!-- ==================== 模型服务 ==================== -->
+      <section x-show="route==='providers'" class="wrap">
+        <div class="row" style="margin-bottom:16px">
+          <div class="small muted">
+            兼容所有 OpenAI 格式接口（DeepSeek / OpenAI / 硅基流动 / Ollama / one-api）。Key 加密存储，界面只显示前后各 4 位。
+          </div>
+          <div class="spacer"></div>
+          <button class="btn btn-filled" @click="newProvider()">
+            <span x-html="icon('plus')"></span>新建服务
+          </button>
+        </div>
+
+        <div class="workbench">
+          <div class="card">
+            <div class="card-head" style="padding-bottom:8px">
+              <div>
+                <div class="card-title">模型服务</div>
+                <div class="card-sub" x-text="providers.length ? (providers.length + ' 个服务') : '还没有服务'"></div>
+              </div>
+            </div>
+            <div class="source-list">
+              <template x-for="p in providers" :key="p.id">
+                <div class="source-item" :class="providerSel===p.id && 'active'" @click="selectProvider(p)">
+                  <span x-html="icon('brain')"></span>
+                  <div class="grow">
+                    <div x-text="p.name"></div>
+                    <small x-text="p.model + (p.is_default ? ' · 全局默认' : '')"></small>
+                  </div>
+                </div>
+              </template>
+              <div class="empty" x-show="!providers.length" style="padding:24px 12px">
+                还没有模型服务。<br>右侧表单填一下就能建。
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <div class="card-title" x-text="providerForm.id ? providerForm.name : '新建模型服务'"></div>
+                <div class="card-sub" x-text="providerForm.id
+                  ? (providerForm.base_url + ' · ' + providerForm.model)
+                  : '填 Base URL、API Key 与模型名即可；也可以从预设一键填充'"></div>
+              </div>
+              <div class="actions">
+                <span class="chip chip-success" x-show="providerForm.id && providerForm.is_default">全局默认</span>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="grid grid-2">
+                <div>
+                  <label class="label">服务名称 <span class="req">*</span></label>
+                  <input class="field" x-model="providerForm.name" placeholder="例：DeepSeek 官方">
+                </div>
+                <div>
+                  <label class="label">预设</label>
+                  <select class="select" @change="applyPreset($event.target.value)">
+                    <option value="">手动填写</option>
+                    <template x-for="p in presets" :key="p.key">
+                      <option :value="p.key" x-text="p.label"></option>
+                    </template>
+                  </select>
+                </div>
+                <div style="grid-column:1/-1">
+                  <label class="label">接口地址 <span class="req">*</span></label>
+                  <input class="field mono" x-model="providerForm.base_url" placeholder="https://api.deepseek.com/v1">
+                  <div class="hint">带版本号的那一层，不要写到 /chat/completions。</div>
+                </div>
+                <div>
+                  <label class="label">API Key <span class="req">*</span></label>
+                  <input class="field" type="password" x-model="providerForm.api_key"
+                         :placeholder="providerForm.api_key_mask || 'sk-…'">
+                  <div class="hint" x-show="providerForm.id">留空表示沿用已保存的 Key</div>
+                </div>
+                <div>
+                  <label class="label">模型名 <span class="req">*</span></label>
+                  <input class="field" x-model="providerForm.model" placeholder="deepseek-chat">
+                </div>
+                <div>
+                  <label class="label">温度（0 ~ 2）</label>
+                  <input type="number" step="0.1" min="0" max="2" class="field" x-model.number="providerForm.temperature">
+                </div>
+                <div>
+                  <label class="label">最大输出 tokens</label>
+                  <input type="number" min="1" max="32000" class="field" x-model.number="providerForm.max_tokens">
+                </div>
+                <div style="grid-column:1/-1">
+                  <label class="check">
+                    <input type="checkbox" x-model="providerForm.is_default"> 设为全局默认
+                  </label>
+                </div>
+              </div>
+
+              <div class="banner" x-show="providerForm.id && providerTest[providerForm.id]"
+                   :style="providerTest[providerForm.id] && providerTest[providerForm.id].ok
+                     ? 'background:var(--success-soft);color:var(--success);border-color:transparent;margin:16px 0 0'
+                     : 'background:var(--error-soft);color:var(--error);border-color:transparent;margin:16px 0 0'">
+                <span x-text="providerTest[providerForm.id] && (providerTest[providerForm.id].ok
+                  ? ('连通正常 · ' + providerTest[providerForm.id].latency_ms + 'ms · 回复：' + (providerTest[providerForm.id].reply || ''))
+                  : ('连接失败：' + providerTest[providerForm.id].error))"></span>
+              </div>
+            </div>
+            <div class="card-foot">
+              <button class="btn btn-filled" :disabled="saving" @click="saveProvider()">
+                <span x-html="icon('save')"></span><span x-text="providerForm.id ? '保存' : '创建'"></span>
+              </button>
+              <button class="btn btn-tonal" x-show="providerForm.id" :disabled="saving" @click="testProvider(providerForm.id)">
+                <span x-html="icon('pulse')"></span>测试连接
+              </button>
+              <button class="btn btn-outlined" x-show="providerForm.id && !providerForm.is_default"
+                      @click="setDefaultProvider(providerForm.id)">设为默认</button>
+              <div class="grow"></div>
+              <button class="btn btn-danger" x-show="providerForm.id" @click="deleteProvider(providerForm.id)">删除</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== 运行设置 ==================== -->
+      <section x-show="route==='settings'" class="wrap stack">
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <div class="card-title">会话限流</div>
+              <div class="card-sub">按会话独立计数，超出后丢弃或等待。企业微信硬限 30 条/分钟。</div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="grid grid-3">
+              <div>
+                <label class="label">每窗口次数</label>
+                <input type="number" class="field" x-model.number="settings.rate_limit.count">
+              </div>
+              <div>
+                <label class="label">窗口（秒）</label>
+                <input type="number" class="field" x-model.number="settings.rate_limit.window_seconds">
+              </div>
+              <div>
+                <label class="label">超限策略</label>
+                <select class="select" x-model="settings.rate_limit.strategy">
+                  <option value="discard">丢弃并返回 429</option>
+                  <option value="stall">等待下个窗口</option>
+                </select>
+              </div>
+            </div>
+            <div style="margin-top:14px">
+              <label class="check"><input type="checkbox" x-model="settings.rate_limit.enabled"> 启用限流</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <div class="card-title">消息去重</div>
+              <div class="card-sub">平台会重复推送同一条消息，靠幂等键去重，避免机器人重复回答。</div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="grid grid-3">
+              <div>
+                <label class="label">过期时间（秒，0 = 永不）</label>
+                <input type="number" class="field" x-model.number="settings.dedup.ttl_seconds">
+              </div>
+              <div>
+                <label class="label">行数上限</label>
+                <input type="number" class="field" x-model.number="settings.dedup.max_rows">
+              </div>
+              <div>
+                <label class="label">清理间隔（秒）</label>
+                <input type="number" class="field" x-model.number="settings.dedup.sweep_interval_seconds">
+              </div>
+            </div>
+            <div style="margin-top:14px">
+              <label class="check"><input type="checkbox" x-model="settings.dedup.enabled"> 启用去重</label>
+            </div>
+          </div>
+          <div class="card-foot">
+            <button class="btn btn-filled" @click="saveSettings()"><span x-html="icon('save')"></span>保存设置</button>
+            <button class="btn btn-outlined" @click="sweepDedup()">立即清理一次去重表</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== 关于 ==================== -->
+      <section x-show="route==='about'" class="wrap stack">
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <div class="card-title">鱼缸 · FishTank Console</div>
+              <div class="card-sub">把自建角色接到 QQ 官方机器人与企业微信智能机器人上聊天</div>
+            </div>
+          </div>
+          <div class="card-body small muted" style="line-height:1.9">
+            写一套人格、选一个模型服务、填一次平台凭证，之后在 IM 里直接对话。
+            每次回复都能看到「用了哪个人设版本、命中了哪些记忆、走的哪个模型」。
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><div><div class="card-title">合规立场</div></div></div>
+          <div class="card-body small muted" style="line-height:1.9">
+            · 只接官方开放通道：QQ 官方机器人、企业微信智能机器人，以及本地调试用的 Mock 渠道。<br>
+            · 不实现、不演示个人微信的协议破解或客户端注入 —— 腾讯明确禁止，封号风险高。<br>
+            · 凭证加密存储、界面脱敏展示、不写日志；记忆逐条可查可改可删。
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><div><div class="card-title">技术来源</div></div></div>
+          <div class="card-body small muted" style="line-height:1.9">
+            架构参考 AstrBot 的公开设计思想（平台适配器抽象、多阶段消息管线、统一会话标识、WebUI 作为一等公民），
+            代码为独立实现，未复制其源码。平台协议细节依据 QQ 开放平台与企业微信官方文档。
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- ==================== 弹窗：机器人 ==================== -->
+  <div class="overlay" x-show="modal.create" x-cloak @click.self="modal.create=false">
+    <div class="dialog">
+      <div class="dialog-head">
+        <div class="dialog-title" x-text="editMode ? '编辑机器人' : '新建机器人'"></div>
+        <div class="dialog-sub">机器人 = 人格 + 模型服务 + 平台绑定</div>
+      </div>
+      <div class="dialog-body">
+        <div>
+          <label class="label">名字 <span class="req">*</span></label>
+          <input class="field" x-model="createForm.name" placeholder="例：咸鱼酱">
+          <div class="hint">机器人的头像用名字首字自动生成，不需要单独设置。</div>
+        </div>
+        <div style="margin-top:14px">
+          <label class="label">一句话设定</label>
+          <input class="field" x-model="createForm.one_liner" placeholder="例：嘴硬心软的摸鱼搭子，会在你熬夜时骂你两句。">
+        </div>
+        <div style="margin-top:14px" x-show="!editMode">
+          <label class="label">人格设定（可留空，稍后再写）</label>
+          <textarea class="field" rows="5" x-model="createForm.system_prompt"
+                    placeholder="例：你是咸鱼酱，一条被阿泽养在鱼缸里的咸鱼…"></textarea>
+        </div>
+      </div>
+      <div class="dialog-actions">
+        <span class="dialog-error" x-text="modalError"></span>
+        <div class="grow"></div>
+        <button class="btn" @click="modal.create=false">取消</button>
+        <button class="btn btn-filled" :disabled="saving" @click="submitCreate()"
+                x-text="editMode ? '保存' : '创建'"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 弹窗：凭证 ==================== -->
+  <div class="overlay" x-show="modal.bind" x-cloak @click.self="modal.bind=false">
+    <div class="dialog">
+      <div class="dialog-head">
+        <div class="dialog-title" x-text="'绑定 · ' + (bindForm.platform ? bindForm.platform.label : '')"></div>
+        <div class="dialog-sub" x-text="bindForm.platform ? bindForm.platform.doc_hint : ''"></div>
+      </div>
+      <div class="dialog-body">
+        <template x-for="f in (bindForm.platform ? bindForm.platform.fields : [])" :key="f.key">
+          <div style="margin-bottom:14px">
+            <label class="label"><span x-text="f.label"></span> <span class="req" x-show="f.required">*</span></label>
+            <template x-if="f.type==='bool'">
+              <label class="check"><input type="checkbox" x-model="bindForm.config[f.key]"> 启用</label>
+            </template>
+            <template x-if="f.type==='select'">
+              <select class="select" x-model="bindForm.config[f.key]">
+                <template x-for="o in f.options" :key="o.value">
+                  <option :value="o.value" x-text="o.label"></option>
+                </template>
+              </select>
+            </template>
+            <template x-if="f.type==='number'">
+              <input type="number" class="field" x-model.number="bindForm.config[f.key]" :placeholder="f.placeholder">
+            </template>
+            <template x-if="f.type==='text' || f.type==='secret'">
+              <input class="field" :type="f.type==='secret' ? 'password' : 'text'"
+                     x-model="bindForm.config[f.key]" :placeholder="f.placeholder">
+            </template>
+            <div class="hint" x-show="f.hint" x-text="f.hint"></div>
+          </div>
+        </template>
+        <div class="hint" x-show="bindForm.binding_id">密钥留空表示沿用已保存的值，不会把脱敏串写成新密钥。</div>
+        <div class="divider" x-show="bindForm.platform && bindForm.platform.constraints && bindForm.platform.constraints.length"></div>
+        <div class="small muted" x-show="bindForm.platform && bindForm.platform.constraints && bindForm.platform.constraints.length">
+          <div style="margin-bottom:6px">平台限制：</div>
+          <ul style="margin:0; padding-left:18px; line-height:1.9">
+            <template x-for="c in (bindForm.platform ? bindForm.platform.constraints : [])" :key="c">
+              <li x-text="c"></li>
+            </template>
+          </ul>
+        </div>
+      </div>
+      <div class="dialog-actions">
+        <span class="dialog-error" x-text="modalError"></span>
+        <div class="grow"></div>
+        <button class="btn" @click="modal.bind=false">取消</button>
+        <button class="btn btn-filled" :disabled="saving" @click="submitBind()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 弹窗：记忆 ==================== -->
+  <div class="overlay" x-show="modal.memory" x-cloak @click.self="modal.memory=false">
+    <div class="dialog">
+      <div class="dialog-head">
+        <div class="dialog-title" x-text="memoryForm.id ? '编辑记忆' : '添加记忆'"></div>
+        <div class="dialog-sub">建议写成「用户…」的事实，回复时会自动转成第二人称</div>
+      </div>
+      <div class="dialog-body">
+        <div style="margin-bottom:14px">
+          <label class="label">内容 <span class="req">*</span></label>
+          <textarea class="field" rows="4" x-model="memoryForm.content"
+                    placeholder="例：用户是夜猫子，常凌晨两点还在改方案"></textarea>
+        </div>
+        <div class="row" style="gap:16px">
+          <div style="width:140px">
+            <label class="label">重要度（1-5）</label>
+            <input type="number" min="1" max="5" class="field" x-model.number="memoryForm.importance">
+          </div>
+          <label class="check" style="margin-top:18px">
+            <input type="checkbox" x-model="memoryForm.pinned"> 置顶（每轮都注入）
+          </label>
+        </div>
+      </div>
+      <div class="dialog-actions">
+        <span class="dialog-error" x-text="modalError"></span>
+        <div class="grow"></div>
+        <button class="btn" @click="modal.memory=false">取消</button>
+        <button class="btn btn-filled" :disabled="saving" @click="submitMemory()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 弹窗：日志 ==================== -->
+  <div class="overlay" x-show="modal.logs" x-cloak @click.self="closeLogs()">
+    <div class="dialog wide">
+      <div class="dialog-head">
+        <div class="dialog-title">运行日志</div>
+        <div class="dialog-sub" x-text="logs.status"></div>
+      </div>
+      <div class="dialog-body">
+        <div class="logbox">
+          <div class="empty" x-show="!logs.items.length" style="padding:24px 12px">
+            还没有日志。连上平台后，收到的消息、发出的回复、失败原因都会出现在这里。
+          </div>
+          <template x-for="(l,i) in logs.items" :key="i">
+            <div class="log-line" :class="l.level">
+              <span class="log-time" x-text="l.at.slice(11,19)"></span>
+              <span class="log-level" x-text="l.level"></span>
+              <span class="log-msg" x-text="l.message"></span>
+              <div class="log-detail" x-show="l.detail" x-text="l.detail"></div>
+            </div>
+          </template>
+        </div>
+      </div>
+      <div class="dialog-actions">
+        <button class="btn btn-tonal" @click="loadLogs()">刷新</button>
+        <div class="grow"></div>
+        <button class="btn" @click="closeLogs()">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 弹窗：模拟消息 ==================== -->
+  <div class="overlay" x-show="modal.simulate" x-cloak @click.self="modal.simulate=false">
+    <div class="dialog">
+      <div class="dialog-head">
+        <div class="dialog-title">模拟一条入站消息</div>
+        <div class="dialog-sub">走「适配器 → 队列 → 管线 → 适配器」全链路，用来验证链路是否通</div>
+      </div>
+      <div class="dialog-body">
+        <textarea class="field" rows="3" x-model="simulateForm.message" placeholder="模拟用户在 Mock 渠道说一句话"></textarea>
+        <div x-show="simulateResult" style="margin-top:14px">
+          <div class="label">适配器发出的消息</div>
+          <template x-for="(m,i) in (simulateResult || [])" :key="i">
+            <div class="memory-row">
+              <div class="memory-text">
+                <span class="chip" :class="m.finish ? 'chip-success' : ''" x-text="m.finish ? '最终' : '占位'"></span>
+                <span style="margin-left:8px" x-text="m.text || m.content"></span>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+      <div class="dialog-actions">
+        <span class="dialog-error" x-text="modalError"></span>
+        <div class="grow"></div>
+        <button class="btn" @click="modal.simulate=false">关闭</button>
+        <button class="btn btn-filled" :disabled="saving" @click="submitSimulate()">注入</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function tank() {
+  return {
+    /* ---------- 主题 ---------- */
+    theme: 'dark',
+    /* ---------- 路由 ---------- */
+    route: 'overview',
+    botId: '',
+    tab: 'persona',
+    botTabs: [
+      { key: 'persona', label: '人格' },
+      { key: 'channels', label: '平台' },
+      { key: 'memory', label: '记忆' },
+      { key: 'chat', label: '调试' },
+    ],
+    /* ---------- 运行概览 ---------- */
+    ov: {},
+    stats: {
+      range: '7d', range_label: '最近 7 天', message_count: 0,
+      model: null, series: [], by_channel: [], by_model: [], by_character: [], sessions: [],
+    },
+    statsTimer: null,
+    channelTimer: null,
+    channelBusy: {},
+    statRanges: [
+      { key: '1d', label: '1 天' },
+      { key: '3d', label: '3 天' },
+      { key: '7d', label: '7 天' },
+      { key: '30d', label: '30 天' },
+      { key: 'all', label: '全部' },
+    ],
+    /* ---------- 全局状态 ---------- */
+    online: true,
+    loading: false,
+    saving: false,
+    errorMsg: '',
+    modalError: '',
+    health: {},
+    characters: [],
+    providers: [],
+    platforms: [],
+    presets: [],
+    providerTypes: [],
+    presetsLoaded: false,
+    /* ---------- 机器人 ---------- */
+    detail: null,
+    persona: {
+      system_prompt: '', personality_tags: '', catchphrases: '', speech_style: '',
+      taboo_topics: '', backstory: '', style_hint: '', note: '',
+    },
+    personaDirty: false,
+    modelForm: { model_provider_id: '', context_rounds: 8 },
+    chat: { messages: [], input: '', sending: false, trace: null, sessionKey: '' },
+    /* ---------- 模型服务工作台 ---------- */
+    providerSel: '',
+    providerForm: {},
+    providerTest: {},
+    /* ---------- 设置 ---------- */
+    settings: {
+      rate_limit: { enabled: true, count: 30, window_seconds: 60, strategy: 'discard' },
+      dedup: { enabled: true, ttl_seconds: 3600, sweep_interval_seconds: 300, max_rows: 100000 },
+    },
+    /* ---------- 弹窗与表单 ---------- */
+    modal: { create: false, bind: false, memory: false, logs: false, simulate: false },
+    editMode: false,
+    createForm: { name: '', one_liner: '', system_prompt: '' },
+    bindForm: { platform: null, config: {}, binding_id: '' },
+    memoryForm: { id: '', content: '', importance: 3, pinned: false },
+    simulateForm: { message: '你好呀，今天怎么样？' },
+    simulateResult: null,
+    logs: { binding_id: '', items: [], status: '', timer: null },
+
+    /* ================= 图标（lucide 风格内联 SVG） ================= */
+    icon(name) {
+      const body = {
+        bot: '<rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><path d="M8 16h.01"/><path d="M16 16h.01"/>',
+        dashboard: '<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>',
+        box: '<path d="M21 8v8a2 2 0 0 1-1 1.73l-7 4a2 2 0 0 1-2 0l-7-4A2 2 0 0 1 3 16V8a2 2 0 0 1 1-1.73l7-4a2 2 0 0 1 2 0l7 4A2 2 0 0 1 21 8z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>',
+        sliders: '<path d="M4 21v-7"/><path d="M4 10V3"/><path d="M12 21v-9"/><path d="M12 8V3"/><path d="M20 21v-5"/><path d="M20 12V3"/><path d="M2 14h4"/><path d="M10 8h4"/><path d="M18 16h4"/>',
+        info: '<circle cx="12" cy="12" r="9"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
+        sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.9 4.9 1.4 1.4"/><path d="m17.7 17.7 1.4 1.4"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m4.9 19.1 1.4-1.4"/><path d="m17.7 6.3 1.4-1.4"/>',
+        moon: '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
+        refresh: '<path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 3v6h-6"/>',
+        plus: '<path d="M5 12h14"/><path d="M12 5v14"/>',
+        save: '<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/>',
+        key: '<circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/>',
+        brain: '<path d="M12 5a3 3 0 0 0-3 3 3 3 0 0 0-1 5.8V17a3 3 0 0 0 4 2.8"/><path d="M12 5a3 3 0 0 1 3 3 3 3 0 0 1 1 5.8V17a3 3 0 0 1-4 2.8"/><path d="M12 5v15"/>',
+        chat: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+        send: '<path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>',
+        alert: '<path d="m10.3 3.9-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3l-8-14a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+        pulse: '<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>',
+        'arrow-left': '<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>',
+        'chevron-right': '<path d="m9 18 6-6-6-6"/>',
+      }[name] || '';
+      return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" '
+        + 'stroke-linecap="round" stroke-linejoin="round" style="width:100%;height:100%;display:block">'
+        + body + '</svg>';
+    },
+
+    /* ================= 主题 ================= */
+    applyTheme(name) {
+      this.theme = name;
+      document.documentElement.setAttribute('data-theme', name);
+      try { localStorage.setItem('tank.theme', name); } catch (e) { /* 隐私模式忽略 */ }
+    },
+    toggleTheme() { this.applyTheme(this.theme === 'dark' ? 'light' : 'dark'); },
+    initTheme() {
+      let saved = null;
+      try { saved = localStorage.getItem('tank.theme'); } catch (e) { saved = null; }
+      const params = new URLSearchParams(location.search);
+      const forced = params.get('theme');
+      if (forced === 'light' || forced === 'dark') { this.applyTheme(forced); return; }
+      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      this.applyTheme(saved || (prefersDark ? 'dark' : 'light'));
+    },
+
+    /* ================= 启动 ================= */
+    async boot() {
+      this.initTheme();
+      window.addEventListener('hashchange', () => this.fromHash());
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') this.closeTopModal();
+      });
+      this.fromHash();
+      await this.refreshAll();
+      if (this.route === 'settings') await this.loadSettings();
+      this.syncProviderSelection();
+    },
+
+    /** 关掉最上层的弹窗（Esc 只处理一层，和常见后台一致）。 */
+    closeTopModal() {
+      if (this.modal.simulate) { this.modal.simulate = false; return true; }
+      if (this.modal.logs) { this.closeLogs(); return true; }
+      if (this.modal.memory) { this.modal.memory = false; return true; }
+      if (this.modal.bind) { this.modal.bind = false; return true; }
+      if (this.modal.create) { this.modal.create = false; return true; }
+      return false;
+    },
+
+    /** 进模型服务页时：已有服务就选中第一个，一个都没有才给新建表单。 */
+    syncProviderSelection() {
+      if (this.route !== 'providers') return;
+      if (this.providerForm.id) return;
+      if (this.providerSel === '__new') return;
+      if (this.providers.length) this.selectProvider(this.providers[0]);
+      else this.newProvider();
+    },
+
+    fromHash() {
+      const parts = (location.hash || '#overview').replace('#', '').split('/');
+      this.route = parts[0] || 'overview';
+      if (this.route === 'bot') {
+        this.botId = parts[1] || this.botId;
+        if (parts[2]) this.tab = parts[2];
+        if (this.botId) this.loadBot(this.botId);
+      }
+      if (this.route === 'overview') {
+        this.loadOverview();
+        this.startStatsPoll();
+      } else {
+        this.stopStatsPoll();
+      }
+      if (this.route === 'bot' && this.tab === 'channels') {
+        this.syncChannelRuntime();
+        this.startChannelPoll();
+      } else {
+        this.stopChannelPoll();
+      }
+      if (this.route === 'settings') this.loadSettings();
+      if (this.route === 'providers') {
+        this.syncProviderSelection();
+        // 直接点导航进来时 fromHash 早于数据加载，这里再兜一次
+        setTimeout(() => this.syncProviderSelection(), 300);
+      }
+      if (this.modal.logs) this.stopLogs();
+    },
+
+    go(route, id) {
+      if (route === 'bot') { this.botId = id; location.hash = 'bot/' + id; }
+      else { location.hash = route; }
+      this.fromHash();
+    },
+
+    goTab(key) {
+      this.tab = key;
+      if (this.botId) history.replaceState(null, '', '#bot/' + this.botId + '/' + key);
+      if (key === 'chat' && !this.chat.sessionKey) this.resetSession();
+      if (key === 'channels') {
+        this.syncChannelRuntime();
+        this.startChannelPoll();
+      } else {
+        this.stopChannelPoll();
+      }
+    },
+
+    resetSession() {
+      this.chat.sessionKey = 'console:' + (this.botId || 'debug') + ':' + Date.now().toString(36);
+    },
+
+    clearChat() {
+      this.chat.messages = [];
+      this.chat.trace = null;
+      this.resetSession();
+    },
+
+    pageTitle() {
+      if (this.route === 'overview') return '运行概览';
+      if (this.route === 'providers') return '模型服务';
+      if (this.route === 'settings') return '运行设置';
+      if (this.route === 'about') return '关于';
+      if (this.route === 'bot') return this.detail ? this.detail.character.name : '机器人';
+      return '机器人';
+    },
+
+    pageSubtitle() {
+      if (this.route === 'overview') return '运行时间、消息与模型消耗';
+      if (this.route === 'providers') return '配置大模型 API：Base URL / Key / 模型名，可随时切换';
+      if (this.route === 'settings') return '限流与去重，改完立即生效';
+      if (this.route === 'about') return '合规立场与技术来源';
+      if (this.route === 'bot') return this.detail ? (this.detail.character.one_liner || '') : '';
+      return '人格、模型与平台绑定都在这里管理';
+    },
+
+    goProvidersConfig() {
+      this.go('providers');
+      if (!this.providerForm.id) this.newProvider();
+    },
+
+    /* ================= HTTP ================= */
+    async api(path, opts) {
+      const options = Object.assign({ headers: { 'Content-Type': 'application/json' } }, opts || {});
+      const resp = await fetch(path, options);
+      const text = await resp.text();
+      let data = null;
+      try { data = text ? JSON.parse(text) : null; } catch (e) { data = null; }
+      if (!resp.ok) {
+        const detail = (data && (data.detail || data.error)) || ('HTTP ' + resp.status);
+        throw new Error(typeof detail === 'string' ? detail : JSON.stringify(detail));
+      }
+      return data;
+    },
+
+    async guard(fn, opts) {
+      const silent = opts && opts.silent;
+      if (!silent) { this.loading = true; this.errorMsg = ''; }
+      try { return await fn(); }
+      catch (e) {
+        this.errorMsg = e.message || String(e);
+        if (opts && opts.modal) this.modalError = this.errorMsg;
+        return null;
+      }
+      finally { if (!silent) this.loading = false; }
+    },
+
+    async refreshAll() {
+      await this.guard(async () => {
+        const r = await Promise.all([
+          this.api('/api/health'), this.api('/api/characters'),
+          this.api('/api/providers'), this.api('/api/platforms/schema'),
+        ]);
+        this.health = r[0];
+        this.characters = r[1];
+        this.providers = r[2];
+        this.platforms = r[3].filter(p => ['mock', 'qq_official', 'wecom'].indexOf(p.channel_type) >= 0);
+        this.online = true;
+        if (!this.presetsLoaded) await this.loadPresets();
+        this.syncProviderSelection();
+      }, { silent: true });
+    },
+
+    async loadPresets() {
+      const data = await this.guard(() => this.api('/api/providers/presets'), { silent: true });
+      if (data) {
+        this.presets = data.presets || [];
+        this.providerTypes = data.types || [];
+        this.presetsLoaded = true;
+      }
+    },
+
+    /* ================= 机器人 ================= */
+    openCreate() {
+      this.editMode = false;
+      this.modalError = '';
+      this.createForm = { name: '', one_liner: '', system_prompt: '' };
+      this.modal.create = true;
+    },
+
+    openEdit() {
+      if (!this.detail) return;
+      const c = this.detail.character;
+      this.editMode = true;
+      this.modalError = '';
+      this.createForm = { name: c.name, one_liner: c.one_liner, system_prompt: '' };
+      this.modal.create = true;
+    },
+
+    async submitCreate() {
+      this.modalError = '';
+      if (!this.createForm.name.trim()) { this.modalError = '名字不能为空'; return; }
+      this.saving = true;
+      try {
+        if (this.editMode) {
+          await this.api('/api/characters/' + this.detail.character.id, {
+            method: 'PUT',
+            body: JSON.stringify({
+              name: this.createForm.name,
+              one_liner: this.createForm.one_liner,
+            }),
+          });
+          this.modal.create = false;
+          await this.loadBot(this.detail.character.id);
+        } else {
+          const created = await this.api('/api/characters', { method: 'POST', body: JSON.stringify(this.createForm) });
+          this.modal.create = false;
+          await this.refreshAll();
+          this.go('bot', created.character.id);
+          await this.loadBot(created.character.id);
+          return;
+        }
+        await this.refreshAll();
+      } catch (e) { this.modalError = e.message; }
+      finally { this.saving = false; }
+    },
+
+    async openBot(id) {
+      this.tab = 'persona';
+      this.go('bot', id);
+      await this.loadBot(id);
+    },
+
+    async loadBot(id) {
+      const data = await this.guard(() => this.api('/api/characters/' + id));
+      if (!data) return;
+      this.detail = data;
+      this.botId = id;
+      const v = data.active_version || {};
+      this.persona = {
+        system_prompt: v.system_prompt || '',
+        personality_tags: (v.personality_tags || []).join('、'),
+        catchphrases: (v.catchphrases || []).join('、'),
+        speech_style: v.speech_style || '',
+        taboo_topics: (v.taboo_topics || []).join('、'),
+        backstory: v.backstory || '',
+        style_hint: v.style_hint || '',
+        note: '',
+      };
+      this.personaDirty = false;
+      this.modelForm = {
+        model_provider_id: (data.model && data.model.provider_id) || '',
+        context_rounds: (data.model && data.model.context_rounds) || 0,
+      };
+      this.resetSession();
+    },
+
+    async savePersona() {
+      if (!this.detail) return;
+      this.saving = true;
+      try {
+        const split = (s) => (s || '').split(/[,、，]/).map(x => x.trim()).filter(Boolean);
+        await this.api('/api/characters/' + this.detail.character.id + '/versions', {
+          method: 'POST',
+          body: JSON.stringify({
+            system_prompt: this.persona.system_prompt,
+            personality_tags: split(this.persona.personality_tags),
+            catchphrases: split(this.persona.catchphrases),
+            taboo_topics: split(this.persona.taboo_topics),
+            speech_style: this.persona.speech_style,
+            backstory: this.persona.backstory,
+            style_hint: this.persona.style_hint,
+            note: this.persona.note || '在控制台保存',
+          }),
+        });
+        this.personaDirty = false;
+        await this.loadBot(this.detail.character.id);
+        await this.refreshAll();
+      } catch (e) { this.errorMsg = e.message; }
+      finally { this.saving = false; }
+    },
+
+    async rollback(v) {
+      if (!confirm('回滚到 v' + v.version_no + '？会以该版本内容生成一个新版本。')) return;
+      await this.guard(async () => {
+        await this.api('/api/versions/' + v.id + '/rollback', { method: 'POST', body: JSON.stringify({ note: '' }) });
+        await this.loadBot(this.detail.character.id);
+      });
+    },
+
+    async deleteBot() {
+      if (!this.detail) return;
+      if (!confirm('删除「' + this.detail.character.name + '」？人设、记忆、绑定与对话记录都会一起删除。')) return;
+      await this.guard(async () => {
+        await this.api('/api/characters/' + this.detail.character.id, { method: 'DELETE' });
+        this.detail = null;
+        this.go('bots');
+        await this.refreshAll();
+      });
+    },
+
+    async saveModel() {
+      if (!this.detail) return;
+      await this.guard(async () => {
+        await this.api('/api/characters/' + this.detail.character.id + '/model', {
+          method: 'PUT',
+          body: JSON.stringify({
+            model_provider_id: this.modelForm.model_provider_id || '',
+            context_rounds: this.modelForm.context_rounds,
+          }),
+        });
+        await this.loadBot(this.detail.character.id);
+        await this.refreshAll();
+      });
+    },
+
+    /* ================= 渠道 ================= */
+    bindingOf(channelType) {
+      if (!this.detail) return null;
+      return (this.detail.bindings || []).find(b => b.channel_type === channelType) || null;
+    },
+
+    statusLabel(b) {
+      if (!b) return '未绑定';
+      if (b.status === 'connected') return '在线';
+      if (b.status === 'error') return '连接失败';
+      if (b.status === 'connecting') return '连接中';
+      return '未连接';
+    },
+
+    statusChip(b) {
+      if (!b) return '';
+      if (b.status === 'connected') return 'chip-success';
+      if (b.status === 'error') return 'chip-error';
+      return 'chip-warning';
+    },
+
+    openBind(platform) {
+      this.modalError = '';
+      const existing = this.bindingOf(platform.channel_type);
+      const config = {};
+      platform.fields.forEach(f => {
+        const saved = existing && existing.config ? existing.config[f.key] : undefined;
+        if (saved !== undefined && saved !== null && saved !== '') config[f.key] = saved;
+        else if (f.type === 'bool') config[f.key] = !!f.default;
+        else config[f.key] = f.default !== undefined ? f.default : '';
+      });
+      this.bindForm = { platform: platform, config: config, binding_id: existing ? existing.id : '' };
+      this.modal.bind = true;
+    },
+
+    async submitBind() {
+      this.modalError = '';
+      if (!this.detail) return;
+      this.saving = true;
+      try {
+        const platform = this.bindForm.platform;
+        if (this.bindForm.binding_id) {
+          await this.api('/api/channels/' + this.bindForm.binding_id, {
+            method: 'PUT', body: JSON.stringify({ config: this.bindForm.config }),
+          });
+        } else {
+          await this.api('/api/characters/' + this.detail.character.id + '/channels', {
+            method: 'POST',
+            body: JSON.stringify({ channel_type: platform.channel_type, config: this.bindForm.config }),
+          });
+        }
+        this.modal.bind = false;
+        await this.loadBot(this.detail.character.id);
+        await this.refreshAll();
+      } catch (e) { this.modalError = e.message; }
+      finally { this.saving = false; }
+    },
+
+    /* ================= 渠道运行态轮询 ================= */
+    /** 把 /api/channels/runtime 的真实状态合并进 detail.bindings。
+     *  注意：必须整条替换数组元素，直接改对象属性不会触发 Alpine 重渲染。 */
+    async syncChannelRuntime() {
+      if (!this.detail) return;
+      const data = await this.guard(() => this.api('/api/channels/runtime'), { silent: true });
+      if (!data) return;
+      const byId = {};
+      (data.channels || []).forEach((c) => { byId[c.id] = c; });
+      this.detail.bindings = (this.detail.bindings || []).map((b) => {
+        const live = byId[b.id];
+        if (!live) return b;
+        return Object.assign({}, b, {
+          status: live.status,
+          last_error: live.last_error || '',
+          stats: live.stats || b.stats,
+        });
+      });
+    },
+
+    startChannelPoll() {
+      this.stopChannelPoll();
+      this.channelTimer = setInterval(() => {
+        if (this.route === 'bot' && this.tab === 'channels') this.syncChannelRuntime();
+      }, 3000);
+    },
+
+    stopChannelPoll() {
+      if (this.channelTimer) {
+        clearInterval(this.channelTimer);
+        this.channelTimer = null;
+      }
+    },
+
+    markBusy(bindingId, busy) {
+      const next = Object.assign({}, this.channelBusy);
+      if (busy) next[bindingId] = true;
+      else delete next[bindingId];
+      this.channelBusy = next;
+    },
+
+    async connectChannel(channelType) {
+      const b = this.bindingOf(channelType);
+      if (!b) return;
+      this.markBusy(b.id, true);
+      try {
+        // 后端会等到适配器真正连上（或失败）才返回，这里转圈就行
+        const out = await this.guard(() => this.api('/api/channels/' + b.id + '/connect', { method: 'POST' }));
+        if (out) {
+          this.detail.bindings = this.detail.bindings.map((x) =>
+            x.id === b.id ? Object.assign({}, x, { status: out.status, last_error: out.last_error || '' }) : x);
+          if (out.status === 'error') this.errorMsg = out.last_error || '连接失败，看看运行日志。';
+          this.startChannelPoll();
+          this.refreshAll();
+        }
+      } finally {
+        this.markBusy(b.id, false);
+      }
+    },
+
+    async disconnectChannel(channelType) {
+      const b = this.bindingOf(channelType);
+      if (!b) return;
+      await this.guard(async () => {
+        await this.api('/api/channels/' + b.id + '/disconnect', { method: 'POST' });
+        await this.syncChannelRuntime();
+        await this.refreshAll();
+      });
+    },
+
+    async unbind(channelType) {
+      const b = this.bindingOf(channelType);
+      if (!b) return;
+      if (!confirm('解绑这个渠道？保存的凭证会被删除。')) return;
+      await this.guard(async () => {
+        await this.api('/api/channels/' + b.id, { method: 'DELETE' });
+        this.stopChannelPoll();
+        await this.loadBot(this.detail.character.id);
+        await this.refreshAll();
+      });
+    },
+
+    openLogs(channelType) {
+      const b = this.bindingOf(channelType);
+      if (!b) return;
+      this.logs.binding_id = b.id;
+      this.modal.logs = true;
+      this.loadLogs();
+      this.stopLogs();
+      this.logs.timer = setInterval(() => this.loadLogs(true), 3000);
+    },
+
+    closeLogs() {
+      this.modal.logs = false;
+      this.stopLogs();
+    },
+
+    stopLogs() {
+      if (this.logs.timer) { clearInterval(this.logs.timer); this.logs.timer = null; }
+    },
+
+    async loadLogs(silent) {
+      if (!this.logs.binding_id) return;
+      const data = await this.guard(
+        () => this.api('/api/channels/' + this.logs.binding_id + '/logs'), { silent: true }
+      );
+      if (!data) return;
+      this.logs.items = data.logs || [];
+      this.logs.status = data.connected ? data.status : '未连接';
+      if (!silent) this.errorMsg = '';
+    },
+
+    openSimulate() {
+      this.modalError = '';
+      this.simulateResult = null;
+      this.modal.simulate = true;
+    },
+
+    async submitSimulate() {
+      const b = this.bindingOf('mock');
+      if (!b) return;
+      this.modalError = '';
+      this.saving = true;
+      try {
+        const out = await this.api('/api/channels/' + b.id + '/simulate', {
+          method: 'POST', body: JSON.stringify({ message: this.simulateForm.message }),
+        });
+        this.simulateResult = out.outbox || [];
+        if (out.note) this.modalError = out.note;
+      } catch (e) { this.modalError = e.message; }
+      finally { this.saving = false; }
+    },
+
+    /* ================= 记忆 ================= */
+    openMemory(m) {
+      this.modalError = '';
+      this.memoryForm = m
+        ? { id: m.id, content: m.content, importance: m.importance, pinned: m.pinned }
+        : { id: '', content: '', importance: 3, pinned: false };
+      this.modal.memory = true;
+    },
+
+    async submitMemory() {
+      this.modalError = '';
+      if (!this.memoryForm.content.trim()) { this.modalError = '内容不能为空'; return; }
+      this.saving = true;
+      try {
+        if (this.memoryForm.id) {
+          await this.api('/api/memories/' + this.memoryForm.id, {
+            method: 'PUT',
+            body: JSON.stringify({
+              content: this.memoryForm.content,
+              importance: this.memoryForm.importance,
+              pinned: this.memoryForm.pinned,
+            }),
+          });
+        } else {
+          await this.api('/api/characters/' + this.detail.character.id + '/memories', {
+            method: 'POST',
+            body: JSON.stringify({
+              content: this.memoryForm.content,
+              importance: this.memoryForm.importance,
+              pinned: this.memoryForm.pinned,
+              source: 'manual',
+            }),
+          });
+        }
+        this.modal.memory = false;
+        await this.loadBot(this.detail.character.id);
+        await this.refreshAll();
+      } catch (e) { this.modalError = e.message; }
+      finally { this.saving = false; }
+    },
+
+    async togglePin(m) {
+      await this.guard(async () => {
+        await this.api('/api/memories/' + m.id, { method: 'PUT', body: JSON.stringify({ pinned: !m.pinned }) });
+        await this.loadBot(this.detail.character.id);
+      });
+    },
+
+    async deleteMemory(m) {
+      if (!confirm('删掉这条记忆？')) return;
+      await this.deleteMemoryById(m.id);
+    },
+
+    async deleteMemoryById(id) {
+      await this.guard(async () => {
+        await this.api('/api/memories/' + id, { method: 'DELETE' });
+        await this.loadBot(this.detail.character.id);
+        await this.refreshAll();
+      });
+    },
+
+    /* ================= 对话 ================= */
+    onEnter(ev) {
+      if (ev.shiftKey) return;
+      ev.preventDefault();
+      this.sendChat();
+    },
+
+    async sendChat() {
+      const text = (this.chat.input || '').trim();
+      if (!text || this.chat.sending || !this.detail) return;
+      this.chat.input = '';
+      this.chat.sending = true;
+      this.chat.messages.push({ role: 'user', content: text });
+      this.chat.messages.push({ role: 'assistant', content: '', pending: true });
+      // 用下标回写整条消息，而不是改一个局部对象：
+      // 数组里存的是 Alpine 的响应式代理，改原始字面量不会触发重渲染，
+      // 表现就是「后端 200 回来了，气泡却一直停在正在思考」。
+      const index = this.chat.messages.length - 1;
+      setTimeout(() => this.scrollChatToBottom(), 0);
+      try {
+        const out = await this.api('/api/chat', {
+          method: 'POST',
+          body: JSON.stringify({
+            character_id: this.detail.character.id,
+            message: text,
+            session_key: this.chat.sessionKey,
+            channel_type: 'mock',
+          }),
+        });
+        this.chat.messages[index] = {
+          role: 'assistant',
+          content: out.reply || '（没有回复）',
+          pending: false,
+          meta: 'v' + out.persona_version.version_no + ' · ' +
+            ((out.model && out.model.name) || 'mock') + ' · ' + out.latency_ms + 'ms · ' +
+            out.usage.prompt_tokens + '+' + out.usage.completion_tokens + ' tokens',
+          error: out.warning || '',
+        };
+        this.chat.trace = out;
+        if (out.warning) this.errorMsg = out.warning;
+      } catch (e) {
+        this.chat.messages[index] = {
+          role: 'assistant',
+          content: '（这条没发出去）',
+          pending: false,
+          meta: '',
+          error: e.message,
+        };
+        this.errorMsg = e.message;
+      } finally {
+        this.chat.sending = false;
+        this.scrollChatToBottom();
+      }
+    },
+
+    scrollChatToBottom() {
+      const box = document.querySelector('.chat-scroll');
+      if (box) box.scrollTop = box.scrollHeight;
+    },
+
+    /* ================= 模型服务工作台 ================= */
+    emptyProvider() {
+      return {
+        id: '', name: '', provider_type: 'openai_chat_completion',
+        base_url: 'https://api.deepseek.com/v1', api_key: '', api_key_mask: '',
+        model: 'deepseek-chat', temperature: 0.7, max_tokens: 1000, is_default: false,
+      };
+    },
+
+    newProvider() {
+      this.providerSel = '__new';
+      this.providerForm = this.emptyProvider();
+    },
+
+    selectProvider(p) {
+      this.providerSel = p.id;
+      this.providerForm = {
+        id: p.id, name: p.name, provider_type: p.provider_type, base_url: p.base_url,
+        api_key: '', api_key_mask: p.api_key_mask, model: p.model,
+        temperature: p.temperature, max_tokens: p.max_tokens, is_default: p.is_default,
+      };
+    },
+
+    applyPreset(key) {
+      const p = this.presets.find(x => x.key === key);
+      if (!p) return;
+      this.providerForm.name = this.providerForm.name || p.label;
+      this.providerForm.base_url = p.base_url;
+      this.providerForm.model = p.model;
+    },
+
+    async saveProvider() {
+      this.errorMsg = '';
+      this.saving = true;
+      try {
+        const body = {
+          name: this.providerForm.name,
+          provider_type: this.providerForm.provider_type,
+          base_url: this.providerForm.base_url,
+          model: this.providerForm.model,
+          temperature: this.providerForm.temperature,
+          max_tokens: this.providerForm.max_tokens,
+          is_default: !!this.providerForm.is_default,
+        };
+        if (this.providerForm.api_key) body.api_key = this.providerForm.api_key;
+        let saved;
+        if (this.providerForm.id) {
+          saved = await this.api('/api/providers/' + this.providerForm.id, { method: 'PUT', body: JSON.stringify(body) });
+        } else {
+          if (!body.api_key) { this.errorMsg = 'API Key 不能为空'; this.saving = false; return; }
+          saved = await this.api('/api/providers', { method: 'POST', body: JSON.stringify(body) });
+        }
+        await this.refreshAll();
+        const fresh = this.providers.find(p => p.id === saved.id);
+        if (fresh) this.selectProvider(fresh);
+      } catch (e) { this.errorMsg = e.message; }
+      finally { this.saving = false; }
+    },
+
+    async testProvider(id) {
+      const key = id || '__new';
+      const pending = {};
+      pending[key] = { ok: false, error: '测试中…' };
+      this.providerTest = Object.assign({}, this.providerTest, pending);
+      const out = await this.guard(() => this.api('/api/providers/' + id + '/test', { method: 'POST' }));
+      if (out) {
+        const done = {};
+        done[key] = out;
+        this.providerTest = Object.assign({}, this.providerTest, done);
+      }
+    },
+
+    async setDefaultProvider(id) {
+      await this.guard(async () => {
+        const saved = await this.api('/api/providers/' + id + '/default', { method: 'POST' });
+        await this.refreshAll();
+        if (saved) this.selectProvider(saved);
+      });
+    },
+
+    async deleteProvider(id) {
+      const p = this.providers.find(x => x.id === id);
+      if (!confirm('删除模型服务「' + (p ? p.name : id) + '」？使用它的机器人会回落到默认模型。')) return;
+      await this.guard(async () => {
+        await this.api('/api/providers/' + id, { method: 'DELETE' });
+        await this.refreshAll();
+        this.newProvider();
+      });
+    },
+
+    /* ================= 设置 ================= */
+    async loadSettings() {
+      const data = await this.guard(() => this.api('/api/settings'));
+      if (data) this.settings = data;
+    },
+
+    async saveSettings() {
+      await this.guard(async () => {
+        await this.api('/api/settings/rate_limit', { method: 'PUT', body: JSON.stringify(this.settings.rate_limit) });
+        await this.api('/api/settings/dedup', { method: 'PUT', body: JSON.stringify(this.settings.dedup) });
+      });
+    },
+
+    async sweepDedup() {
+      await this.guard(async () => {
+        const out = await this.api('/api/settings/dedup/sweep', { method: 'POST' });
+        this.errorMsg = '已清理 ' + ((out && out.removed) || 0) + ' 条过期记录';
+      });
+    },
+
+    /* ================= 运行概览 / 统计 ================= */
+    async loadOverview() {
+      const [ov, st] = await Promise.all([
+        this.guard(() => this.api('/api/stats/overview'), { silent: true }),
+        this.guard(() => this.api('/api/stats?range=' + this.stats.range), { silent: true }),
+      ]);
+      if (ov) this.ov = ov;
+      if (st) this.stats = st;
+    },
+
+    async reloadStats() {
+      const st = await this.guard(() => this.api('/api/stats?range=' + this.stats.range), { silent: true });
+      if (st) this.stats = st;
+    },
+
+    async setRange(key) {
+      this.stats.range = key;
+      await this.reloadStats();
+    },
+
+    startStatsPoll() {
+      this.stopStatsPoll();
+      // 概览页每 10 秒自己刷一次，不用手点
+      this.statsTimer = setInterval(() => {
+        if (this.route === 'overview') this.loadOverview();
+      }, 10000);
+    },
+
+    stopStatsPoll() {
+      if (this.statsTimer) {
+        clearInterval(this.statsTimer);
+        this.statsTimer = null;
+      }
+    },
+
+    /* ================= 工具 ================= */
+    fmtNum(n) {
+      const v = Number(n || 0);
+      return v.toLocaleString('en-US');
+    },
+
+    fmtMs(ms) {
+      if (ms === null || ms === undefined || ms === '') return '—';
+      const v = Number(ms);
+      if (Number.isNaN(v)) return '—';
+      return v < 1000 ? Math.round(v) + 'ms' : (v / 1000).toFixed(1) + 's';
+    },
+
+    /** 柱状图：按当前区间的最大值换算成百分比，空数据也留 2% 的高度。 */
+    chartMax(series, key) {
+      let max = 1;
+      (series || []).forEach((p) => { if ((p[key] || 0) > max) max = p[key]; });
+      return max;
+    },
+
+    barPct(point, key) {
+      const value = Number(point[key] || 0);
+      if (value <= 0) return 0;
+      return Math.max(2, Math.round((value / this.chartMax(this.stats.series, key)) * 100));
+    },
+
+    rankPct(list, value, key) {
+      const k = key || 'count';
+      let max = 1;
+      (list || []).forEach((i) => { if ((i[k] || 0) > max) max = i[k]; });
+      return Math.max(2, Math.round((Number(value || 0) / max) * 100));
+    },
+
+    /** 折线：viewBox 0 0 100 100，纵向留 4% 边距，避免线贴边被裁。 */
+    linePoints(series, key) {
+      const list = series || [];
+      if (!list.length) return '';
+      const max = this.chartMax(list, key);
+      const n = list.length;
+      return list.map((p, i) => {
+        const x = n === 1 ? 50 : (i / (n - 1)) * 100;
+        const y = 96 - ((p[key] || 0) / max) * 92;
+        return x.toFixed(2) + ',' + y.toFixed(2);
+      }).join(' ');
+    },
+
+    lineArea(series, key) {
+      const pts = this.linePoints(series, key);
+      if (!pts) return '';
+      return '0,96 ' + pts + ' 100,96';
+    },
+    /** 头像取名字首字（头像是自动生成的，不再让用户填）。 */
+    avatarText(name) {
+      const n = (name || '').trim();
+      return n ? Array.from(n)[0] : '?';
+    },
+
+    /** 按列表顺序取色，保证同屏的机器人颜色互不相同；不在列表里时按名字散列。 */
+    avatarTint(character) {
+      const palette = [
+        ['rgba(91,164,212,.18)', '#5ba4d4'],
+        ['rgba(82,196,26,.16)', '#52c41a'],
+        ['rgba(250,173,20,.16)', '#d99400'],
+        ['rgba(255,77,79,.14)', '#e0575a'],
+        ['rgba(146,84,222,.16)', '#9b7cf0'],
+        ['rgba(20,184,166,.16)', '#14a89b'],
+      ];
+      const name = (character && character.name) || '鱼缸';
+      let index = (this.characters || []).findIndex((c) => c.id === (character && character.id));
+      if (index < 0) {
+        let hash = 0;
+        const chars = Array.from(name);
+        for (let i = 0; i < chars.length; i++) hash = (hash * 31 + chars[i].codePointAt(0)) % 100003;
+        index = hash;
+      }
+      const p = palette[index % palette.length];
+      return 'background:' + p[0] + ';color:' + p[1];
+    },
+
+    fmtTime(iso) {
+      if (!iso) return '';
+      const d = new Date(iso);
+      if (isNaN(d.getTime())) return iso;
+      const p = (n) => String(n).padStart(2, '0');
+      return (d.getMonth() + 1) + '/' + d.getDate() + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+    },
+  };
+}
+</script>
+</body>
+</html>

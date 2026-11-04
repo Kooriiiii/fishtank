@@ -1,0 +1,27 @@
+# ---------- Python ----------
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+env/
+
+# ---------- 运行时数据（绝不提交） ----------
+*.db
+*.db-wal
+*.db-shm
+*.log
+.fishconsole_key
+
+# ---------- 只给自己看的文档（按要求不入库） ----------
+docs/
+
+# ---------- 编辑器 / 系统 ----------
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# ---------- 临时脚本 ----------
+.box-agent-scratch/

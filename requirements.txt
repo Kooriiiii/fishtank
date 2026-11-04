@@ -1,0 +1,12 @@
+# 后端
+fastapi>=0.110
+uvicorn[standard]>=0.27
+pydantic>=2.5
+httpx>=0.26
+
+# 渠道真机 SDK（不装也能跑：适配器会如实报「缺少依赖」并给出安装命令）
+qq-botpy>=1.2        # QQ 官方机器人
+websockets>=12       # 企业微信智能机器人长连接
+
+# 测试
+pytest>=8.0
